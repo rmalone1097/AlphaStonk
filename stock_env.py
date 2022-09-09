@@ -19,7 +19,7 @@ class StockEnv(Env):
         | 2   | Short position         |
 
         ### Observation Space
-        The observation is a `ndarray` with shape `(8,)` where the elements correspond to the following:
+        The observation is a `ndarray` with shape `(candles,featuers)` where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | open                                 | 0    | Inf | dollars ($)  |
@@ -30,14 +30,30 @@ class StockEnv(Env):
         | 5   | vwap                                 | 0    | Inf | dollars ($)  | 
         | 6   | transactions                         | 0    | Inf | transactions |
         | 7   | daily candle counter                 | 0    | Inf | candles      |
+        | 8   | ema_5                                | 0    | Inf | dollars ($)  |
+        | 9   | ema_10                               | 0    | Inf | dollars ($)  |
+        | 10  | ema_15                               | 0    | Inf | dollars ($)  |
+        | 11  | ema_25                               | 0    | Inf | dollars ($)  |
+        | 12  | ema_40                               | 0    | Inf | dollars ($)  |
+        | 13  | ema_65                               | 0    | Inf | dollars ($)  |
+        | 14  | ema_170                              | 0    | Inf | dollars ($)  |
+        | 15  | ema_250                              | 0    | Inf | dollars ($)  |
+        | 16  | ema_360                              | 0    | Inf | dollars ($)  |
+        | 17  | ema_445                              | 0    | Inf | dollars ($)  |
+        | 18  | ema_900                              | 0    | Inf | dollars ($)  |
+        | 19  | ema_1000                             | 0    | Inf | dollars ($)  |
+        | 20  | ema_5_day                            | 0    | Inf | dollars ($)  |
+        | 21  | ema_10_day                           | 0    | Inf | dollars ($)  |
+        | 22  | ema_20_day                           | 0    | Inf | dollars ($)  |
+        | 23  | ema_50_day                           | 0    | Inf | dollars ($)  |
+        | 24  | ema_100_day                          | 0    | Inf | dollars ($)  |
         '''
         self.action_space = Discrete(3)
-        # Flattened version: 3840 candles x 8 features
-        self.observation_space = Box(low=0, high=np.inf, shape=(49920,), dtype=np.float64)
-        
-        self.df = df
         # Window width of data slice per step (days)
         self.window_days = 5
+        # Number of candles by number of featuers
+        self.observation_space = Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float64)
+        self.df = df
         # Every transcation to have this value ($)
         self.transaction_value = 1000
         # Net worth
