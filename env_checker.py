@@ -7,6 +7,8 @@ import time
 
 import os
 
-df = df_builder('SPY_minute_2020-08-17.csv')
+pickle_dir = 'C:\\Users\\water\\Documents\\datasets\\stock_data'
+
+df = pd.read_pickle(pickle_dir + '\\SPY_minute_2012-08-22_built.pkl')
 env = StockEnv(df)
 check_env(env)
