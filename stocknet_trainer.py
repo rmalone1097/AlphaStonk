@@ -4,8 +4,9 @@ from stable_baselines3.common.callbacks import BaseCallback
 from data_utils import *
 from stock_env import StockEnv
 import time
-
 import os
+
+from CNN_custom_policy import CustomCNN
 
 df = pd.read_pickle('SPY_minute_2012-08-22_built.pkl')
 env = StockEnv(df)
@@ -23,7 +24,12 @@ if not os.path.exists(logs_dir):
 
 env.reset()
 
-model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir)
+policy_kwargs = dict(
+    features_extractor_class=CustomCNN,
+    features_extractor_kwargs=dict(features_dim=1024)
+)
+
+model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=logs_dir, policy_kwargs=policy_kwargs)
 
 class TensorboardCallback(BaseCallback):
     def __init__(self, verbose=0):
