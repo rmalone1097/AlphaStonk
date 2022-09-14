@@ -90,7 +90,7 @@ class StockEnv(Env):
         df_slice = self.df.iloc[first_idx:last_idx]
         #print(df_slice)
         #print(action)
-        self.state = df_slice.loc[:, 'open':].to_numpy().flatten()
+        self.state = df_slice.loc[:, 'open':].to_numpy()
 
         # Apply action
         if self.position_log == 0:

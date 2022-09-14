@@ -10,8 +10,9 @@ from CNN_custom_policy import CustomCNN
 
 pickle_dir = 'C:\\Users\\water\\documents\\datasets\\stock_data\\'
 df = pd.read_pickle(pickle_dir + 'SPY_minute_2012-08-22_built.pkl')
-env = StockEnv(df)
-check_env(env)
+trading_df = add_indicators(df)
+env = StockEnv(trading_df)
+#check_env(env)
 
 cwd = os.getcwd()
 models_dir = cwd + '\\models\\PPOflat' + str(time.time())
