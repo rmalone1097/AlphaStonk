@@ -3,6 +3,7 @@ from gym.spaces import Discrete, Box
 from typing import Optional
 import datetime
 
+import torch
 import numpy as np
 import pandas as pd
 from data_utils import *
@@ -91,6 +92,7 @@ class StockEnv(Env):
         #print(df_slice)
         #print(action)
         self.state = df_slice.loc[:, 'open':].to_numpy()
+        #self.state = torch.from_numpy(self.state)
 
         # Apply action
         if self.position_log == 0:
@@ -169,6 +171,7 @@ class StockEnv(Env):
         #print(first_valid_day, first_trading_day)
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
         self.state = df_slice.loc[:, 'open':].to_numpy()
+        #self.state = torch.from_numpy(self.state)
         self.state_idx = [first_valid_name, first_trading_name]
-        #print(np.shape(self.state))
+        print('yo', np.shape(self.state))
         return self.state
