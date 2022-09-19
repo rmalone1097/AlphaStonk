@@ -168,7 +168,7 @@ class StockEnv(Env):
         # The state of the environment is the data slice that the agent will have access to to make a decision
         #print(first_valid_day, first_trading_day)
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = df_slice.loc[:, 'open':].to_numpy().flatten()
+        self.state = df_slice.loc[:, 'open':].to_numpy()
         self.state_idx = [first_valid_name, first_trading_name]
         #print(np.shape(self.state))
         return self.state
