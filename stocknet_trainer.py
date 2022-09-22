@@ -32,7 +32,8 @@ policy_kwargs = dict(
     features_extractor_kwargs=dict(features_dim=1024)
 )
 
-model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=logs_dir, policy_kwargs=policy_kwargs)
+#model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir)
+model = PPO('CnnPolicy', env, verbose=1, tensorboard_log=logs_dir, policy_kwargs=policy_kwargs, batch_size=64)
 
 class TensorboardCallback(BaseCallback):
     def __init__(self, verbose=0):

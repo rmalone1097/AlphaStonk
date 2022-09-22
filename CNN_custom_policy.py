@@ -15,16 +15,14 @@ class CustomCNN(BaseFeaturesExtractor):
             nn.Tanh(),
             nn.MaxPool1d(1),
             nn.ReLU(),
-            nn.Flatten(0)
-            #nn.Linear(1950*32, 1024),
-            #nn.ReLU()
+            nn.Flatten(),
+            nn.Linear(1950*32, 1024),
+            nn.ReLU()
         )
 
         self.linear = nn.Sequential(nn.Linear(1950*32, features_dim), nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        obs  = torch.permute(observations, (1, 2, 0))
-        print(obs)
-        print(obs.shape)
-        #return self.cnn(obs)
-        return self.linear(self.cnn(obs))
+        observations  = torch.permute(observations, (0, 2, 1))
+        return self.cnn(observations)
+        #return self.linear(self.cnn(obs))

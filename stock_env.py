@@ -134,6 +134,7 @@ class StockEnv(Env):
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
+        #print(np.shape(self.state))
 
         return self.state, self.reward, done, info
 
@@ -173,5 +174,5 @@ class StockEnv(Env):
         self.state = df_slice.loc[:, 'open':].to_numpy()
         #self.state = torch.from_numpy(self.state)
         self.state_idx = [first_valid_name, first_trading_name]
-        print('yo', np.shape(self.state))
+        #print('yo', np.shape(self.state))
         return self.state
