@@ -102,8 +102,11 @@ class StockEnv(Env):
             if self.position_log == 0:
                 self.reward = 0
             # If there was a short or long position that was closed out, reward equals position value
-            else:
+            elif self.position_log == 1:
                 position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
+                self.reward = position_value
+            elif self.position_log == 2:
+                position_value = -(self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
             # Start price of new position is the current price
             self.start_price = self.current_price
