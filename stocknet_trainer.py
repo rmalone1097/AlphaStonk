@@ -1,4 +1,6 @@
 from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.logger import CSVOutputFormat
+from stable_baselines3.common.logger import configure
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from data_utils import *
@@ -53,6 +55,10 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/current_price', self.training_env.get_attr('current_price')[0])
         #self.logger.record('reward', reward)
         return True
+
+# Configuration of CSV logger
+#csv_logger = configure(folder = '.', format_strings=["stdout", "csv", "tensorboard"])
+#model.set_logger(csv_logger)
 
 TIMESTEPS = 196560*5
 model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f'PPOflat', callback=TensorboardCallback())

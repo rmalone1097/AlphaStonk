@@ -90,7 +90,7 @@ class StockEnv(Env):
                     done = True
         df_slice = self.df.iloc[first_idx:last_idx]
         #print(df_slice)
-        #print(action)
+        print(action)
         self.state = df_slice.loc[:, 'open':].to_numpy()
         #self.state = torch.from_numpy(self.state)
 
@@ -112,9 +112,9 @@ class StockEnv(Env):
             # Had long position. Update position value (and reward. Might want to look into incentives to hold good positions)
             self.current_price = df_slice.iloc[-1]['close']
             # Add change in price, representing long postion
-            position_value = self.transaction_value + (self.current_price - self.start_price) / self.start_price * self.transaction_value
+            position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
             if action != self.position_log:
-                self.reward = position_value - self.transaction_value
+                self.reward = position_value
                 if self.reward < 0:
                     self.reward *= 1.15
             self.net_worth += self.reward
@@ -124,9 +124,9 @@ class StockEnv(Env):
             # Had short position. Update position value (and reward. Might want to look into incentives to hold good positions)
             self.current_price = df_slice.iloc[-1]['close']
             # Negate change in price, representing short position
-            position_value = self.transaction_value - (self.current_price - self.start_price) / self.start_price * self.transaction_value
+            position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
             if action != self.position_log:
-                self.reward = position_value - self.transaction_value
+                self.reward = position_value
                 if self.reward < 0:
                     self.reward *= 1.15
             self.net_worth += self.reward
