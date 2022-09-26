@@ -98,8 +98,6 @@ class StockEnv(Env):
 
         # Close old position and open new one
         if self.position_log != action:
-            # Start price of new position is the current price
-            self.start_price = self.current_price
             # If there was no existing position don't give any reward
             if self.position_log == 0:
                 self.reward = 0
@@ -107,6 +105,8 @@ class StockEnv(Env):
             else:
                 position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
+            # Start price of new position is the current price
+            self.start_price = self.current_price
         # If it's holding no position, slight penalty equal to 1% loss per day
         elif self.position_log == 0:
             percentage_multiplier = 0.01
