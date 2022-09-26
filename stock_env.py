@@ -94,43 +94,28 @@ class StockEnv(Env):
         self.state = df_slice.loc[:, 'open':].to_numpy()
         #self.state = torch.from_numpy(self.state)
 
-        # Apply action
-        if self.position_log == 0:
-            # Open position if action isn't 0
-            if action != 0:
-                self.start_price = df_slice.iloc[-1]['close']
-                self.reward = 0.0
-            # Action is still 0, slight punishment that will be equal to 1% loss per day
+        self.current_price = df_slice.iloc[-1]['close']
+
+        # Close old position and open new one
+        if self.position_log != action:
+            # Start price of new position is the current price
+            self.start_price = self.current_price
+            # If there was no existing position don't give any reward
+            if self.position_log == 0:
+                self.reward = 0
+            # If there was a short or long position that was closed out, reward equals position value
             else:
-                percentage_multiplier = 0.01
-                steps_in_trading_day = 390
-                #self.reward = 0.0
-                self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
-            self.position_log = action
-
-        elif self.position_log == 1:
-            # Had long position. Update position value (and reward. Might want to look into incentives to hold good positions)
-            self.current_price = df_slice.iloc[-1]['close']
-            # Add change in price, representing long postion
-            position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
-            if action != self.position_log:
+                position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
-                if self.reward < 0:
-                    self.reward *= 1.15
-            self.net_worth += self.reward
-            self.position_log = action
+        # If it's holding no position, slight penalty equal to 1% loss per day
+        elif self.position_log == 0:
+            percentage_multiplier = 0.01
+            steps_in_trading_day = 390
+            #self.reward = 0.0
+            self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
 
-        elif self.position_log == 2:
-            # Had short position. Update position value (and reward. Might want to look into incentives to hold good positions)
-            self.current_price = df_slice.iloc[-1]['close']
-            # Negate change in price, representing short position
-            position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
-            if action != self.position_log:
-                self.reward = position_value
-                if self.reward < 0:
-                    self.reward *= 1.15
-            self.net_worth += self.reward
-            self.position_log = action
+        self.net_worth += self.reward
+        self.position_log = action
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
