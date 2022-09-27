@@ -69,6 +69,9 @@ class StockEnv(Env):
         self.position_log = 0
         # Log to keep track of trades
         self.trade_log = []
+        self.wins = 0
+        self.losses = 0
+        self.win_ratio = 0
         self.reward = 0
         self.action = 0
         self.current_price = 0
@@ -105,9 +108,17 @@ class StockEnv(Env):
             elif self.position_log == 1:
                 position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
+                if self.reward > 0:
+                    self.wins += 1
+                elif self.reward < 0:
+                    self.losses += 1
             elif self.position_log == 2:
                 position_value = -(self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
+                if self.reward > 0:
+                    self.wins += 1
+                elif self.reward < 0:
+                    self.losses += 1
             # Start price of new position is the current price
             self.start_price = self.current_price
         # If it's holding no position, slight penalty equal to 1% loss per day
@@ -117,6 +128,7 @@ class StockEnv(Env):
             #self.reward = 0.0
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
 
+        self.win_ratio = self.wins / (self.wins + self.losses + 1)
         self.net_worth += self.reward
         self.position_log = action
         info = {}
@@ -124,7 +136,7 @@ class StockEnv(Env):
         self.state_idx = [first_idx, last_idx]
         #print(np.shape(self.state))
 
-        return self.state, self.reward, done, info
+        return self.state, self.net_worth, done, info
 
     def render(self):
         pass
