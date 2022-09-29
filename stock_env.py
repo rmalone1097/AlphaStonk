@@ -75,6 +75,14 @@ class StockEnv(Env):
         self.reward = 0
         self.action = 0
         self.current_price = 0
+        # Minimum time (in minutes) a position must be held
+        self.minimum_holding_time = 5
+        # Holding time for a position
+        self.holding_time = 0
+        # Action log
+        self.action_log = 0
+        # Dictionary of open-close price and PL
+        self.pl_dict = {}
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -93,7 +101,7 @@ class StockEnv(Env):
                     done = True
         df_slice = self.df.iloc[first_idx:last_idx]
         #print(df_slice)
-        print(action)
+        #print(action)
         self.state = df_slice.loc[:, 'open':].to_numpy()
         #self.state = torch.from_numpy(self.state)
 
@@ -120,6 +128,7 @@ class StockEnv(Env):
                 elif self.reward < 0:
                     self.losses += 1
             # Start price of new position is the current price
+            #self.pl_dict[self.reward] = [self.current_price, self.start_price, self.position_log]
             self.start_price = self.current_price
         # If it's holding no position, slight penalty equal to 1% loss per day
         elif self.position_log == 0:
