@@ -35,7 +35,8 @@ policy_kwargs = dict(
 )
 
 #model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir)
-model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir, policy_kwargs=policy_kwargs, batch_size=64)
+#model = PPO.load(cwd + '\\models\\PPOflat2epoch\\982800', env=env)
+model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir, policy_kwargs=policy_kwargs, batch_size=64, seed=1)
 
 class TensorboardCallback(BaseCallback):
     def __init__(self, verbose=0):
@@ -53,9 +54,10 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/net_worth', net_worth)
         self.logger.record('variables/action', self.training_env.get_attr('action')[0])
         self.logger.record('variables/current_price', self.training_env.get_attr('current_price')[0])
-        self.logger.record('variables/wins', self.training_env.get_attr('wins')[0])
-        self.logger.record('variables/losses', self.training_env.get_attr('losses')[0])
+        #self.logger.record('variables/wins', self.training_env.get_attr('wins')[0])
+        #self.logger.record('variables/losses', self.training_env.get_attr('losses')[0])
         self.logger.record('variables/win_ratio', self.training_env.get_attr('win_ratio')[0])
+        self.logger.record('variables/long_ratio', self.training_env.get_attr('long_ratio')[0])
         #self.logger.record('reward', reward)
         return True
 

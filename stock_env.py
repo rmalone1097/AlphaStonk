@@ -69,6 +69,10 @@ class StockEnv(Env):
         self.position_log = 0
         # Log to keep track of trades
         self.trade_log = []
+        # Timestep length to update action
+        self.timestep = 5
+        self.longs = 0
+        self.shorts = 0
         self.wins = 0
         self.losses = 0
         self.win_ratio = 0
@@ -87,9 +91,14 @@ class StockEnv(Env):
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
         # Step data window 1 candle
-        done = False
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
+        if last_idx + self.timestep >= len(self.df):
+            self.position_log = 0
+            action = 0
+            done = True
+        else:
+            done = False
         # If data point after last is after market close, find the next market open point
         if self.df.iloc[last_idx]['daily_candle_counter'] == 0:
             for i, row in enumerate(self.df.iloc[last_idx:].itertuples()):
@@ -97,8 +106,6 @@ class StockEnv(Env):
                 if row.daily_candle_counter != 0:
                     first_idx, last_idx = first_idx + i, last_idx + i
                     break
-                if i + last_idx == len(self.df):
-                    done = True
         df_slice = self.df.iloc[first_idx:last_idx]
         #print(df_slice)
         #print(action)
@@ -127,6 +134,16 @@ class StockEnv(Env):
                     self.wins += 1
                 elif self.reward < 0:
                     self.losses += 1
+            
+            # Skip amount of canldes specified by timestep once a position is taken
+            if action != 0:
+                first_idx += 5
+                last_idx += 5
+            
+            if action == 1:
+                self.longs += 1
+            elif action == 2:
+                self.shorts += 1
             # Start price of new position is the current price
             #self.pl_dict[self.reward] = [self.current_price, self.start_price, self.position_log]
             self.start_price = self.current_price
@@ -136,8 +153,11 @@ class StockEnv(Env):
             steps_in_trading_day = 390
             #self.reward = 0.0
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
+        else:
+            self.reward = 0
 
         self.win_ratio = self.wins / (self.wins + self.losses + 1)
+        self.long_ratio = self.longs / (self.longs + self.shorts + 1)
         self.net_worth += self.reward
         self.position_log = action
         info = {}
@@ -145,7 +165,7 @@ class StockEnv(Env):
         self.state_idx = [first_idx, last_idx]
         #print(np.shape(self.state))
 
-        return self.state, self.net_worth, done, info
+        return self.state, self.reward, done, info
 
     def render(self):
         pass
