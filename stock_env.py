@@ -87,6 +87,8 @@ class StockEnv(Env):
         self.action_log = 0
         # Dictionary of open-close price and PL
         self.pl_dict = {}
+        # Positive if winning streak, negative if losing streak
+        self.streak = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -116,6 +118,7 @@ class StockEnv(Env):
 
         # Close old position and open new one
         if self.position_log != action:
+            position_value = 0
             # If there was no existing position don't give any reward
             if self.position_log == 0:
                 self.reward = 0
@@ -134,6 +137,24 @@ class StockEnv(Env):
                     self.wins += 1
                 elif self.reward < 0:
                     self.losses += 1
+            
+            if position_value > 0 and self.streak >= 0:
+                self.streak += 1
+            elif position_value < 0 and self.streak <= 0:
+                self.streak -= 1
+            else:
+                self.streak = 0
+            
+            self.net_worth += self.reward
+
+            if self.position_log == 2 and self.reward > 0:
+                self.reward = self.reward * 2
+
+            if self.reward > 0 and self.streak >= 1:
+                self.reward = self.reward ** self.streak
+            elif self.reward < 0 and self.streak <= 1:
+                self.reward = abs(self.reward) ** abs(self.streak)
+                self.reward = -self.reward
             
             # Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
@@ -158,7 +179,6 @@ class StockEnv(Env):
 
         self.win_ratio = self.wins / (self.wins + self.losses + 1)
         self.long_ratio = self.longs / (self.longs + self.shorts + 1)
-        self.net_worth += self.reward
         self.position_log = action
         info = {}
         self.action = action
