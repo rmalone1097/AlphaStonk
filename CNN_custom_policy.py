@@ -16,7 +16,7 @@ class CustomCNN(BaseFeaturesExtractor):
             nn.MaxPool1d(1),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(1950*32, 1024),
+            nn.Linear(1950*32, features_dim),
             nn.ReLU()
         )
 

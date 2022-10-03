@@ -148,7 +148,7 @@ class StockEnv(Env):
             self.net_worth += self.reward
 
             if self.position_log == 2 and self.reward > 0:
-                self.reward = self.reward * 2
+                self.reward = self.reward * 1.5
 
             if self.reward > 0 and self.streak >= 1:
                 self.reward = self.reward ** self.streak
