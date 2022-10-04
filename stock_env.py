@@ -89,6 +89,8 @@ class StockEnv(Env):
         self.pl_dict = {}
         # Positive if winning streak, negative if losing streak
         self.streak = 0
+        # Hold time of position
+        self.holding_time = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -96,6 +98,8 @@ class StockEnv(Env):
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
         if last_idx + self.timestep >= len(self.df):
+            self.win_ratio = 0
+            self.long_ratio = 0
             self.position_log = 0
             action = 0
             done = True
@@ -147,14 +151,17 @@ class StockEnv(Env):
             
             self.net_worth += self.reward
 
-            if self.position_log == 2 and self.reward > 0:
-                self.reward = self.reward
+            if self.position_log == 1 and self.reward < 0:
+                self.reward = self.reward * 1.5
+
+            if self.position_log == 2 and self.reward < 0:
+                self.reward = self.reward * 1.5
 
             if self.reward > 0 and self.streak >= 1:
-                self.reward = self.reward ** self.streak
-            elif self.reward < 0 and self.streak <= 1:
-                self.reward = abs(self.reward) ** abs(self.streak)
-                self.reward = -self.reward
+                self.reward = self.reward * self.streak
+            '''elif self.reward < 0 and self.streak <= 1:
+                self.reward = abs(self.reward) * abs(self.streak) / self.holding_time
+                self.reward = -self.reward'''
             
             # Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
@@ -168,6 +175,7 @@ class StockEnv(Env):
             # Start price of new position is the current price
             #self.pl_dict[self.reward] = [self.current_price, self.start_price, self.position_log]
             self.start_price = self.current_price
+            self.holding_time = self.minimum_holding_time
         # If it's holding no position, slight penalty equal to 1% loss per day
         elif self.position_log == 0:
             percentage_multiplier = 0.01
@@ -176,6 +184,7 @@ class StockEnv(Env):
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
         else:
             self.reward = 0
+            self.holding_time += 1
 
         self.win_ratio = self.wins / (self.wins + self.losses + 1)
         self.long_ratio = self.longs / (self.longs + self.shorts + 1)
@@ -224,6 +233,4 @@ class StockEnv(Env):
         #self.state = torch.from_numpy(self.state)
         self.state_idx = [first_valid_name, first_trading_name]
         #print('yo', np.shape(self.state))
-        self.win_ratio = 0
-        self.long_ratio = 0
         return self.state

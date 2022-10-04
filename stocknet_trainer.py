@@ -59,6 +59,7 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/win_ratio', self.training_env.get_attr('win_ratio')[0])
         self.logger.record('variables/long_ratio', self.training_env.get_attr('long_ratio')[0])
         self.logger.record('variables/streak', self.training_env.get_attr('streak')[0])
+        self.logger.record('variables/holding_time', self.training_env.get_attr('holding_time')[0])
         #self.logger.record('reward', reward)
         return True
 
@@ -66,6 +67,6 @@ class TensorboardCallback(BaseCallback):
 #csv_logger = configure(folder = '.', format_strings=["stdout", "csv", "tensorboard"])
 #model.set_logger(csv_logger)
 
-TIMESTEPS = 5000000
+TIMESTEPS = 10000000
 model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f'PPOflat', callback=TensorboardCallback())
 model.save(models_dir + '\\' + str(TIMESTEPS))
