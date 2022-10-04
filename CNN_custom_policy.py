@@ -11,7 +11,7 @@ class CustomCNN(BaseFeaturesExtractor):
         n_input_channels = observation_space.shape[1]
         #print(type(n_input_channels))
         self.cnn = nn.Sequential(
-            nn.Conv1d(n_input_channels, 32, 1, padding='same'),
+            nn.Conv1d(n_input_channels, 64, 1, padding='same'),
             nn.Tanh(),
             nn.MaxPool1d(1),
             nn.ReLU(),
@@ -19,7 +19,7 @@ class CustomCNN(BaseFeaturesExtractor):
         )
 
         self.linear = nn.Sequential(
-            nn.Linear(1950*32 + n_input_channels, features_dim), 
+            nn.Linear(1950*64 + n_input_channels, features_dim), 
             nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
