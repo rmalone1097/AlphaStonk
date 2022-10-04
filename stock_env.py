@@ -148,7 +148,7 @@ class StockEnv(Env):
             self.net_worth += self.reward
 
             if self.position_log == 2 and self.reward > 0:
-                self.reward = self.reward * 1.5
+                self.reward = self.reward
 
             if self.reward > 0 and self.streak >= 1:
                 self.reward = self.reward ** self.streak
@@ -158,8 +158,8 @@ class StockEnv(Env):
             
             # Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
-                first_idx += 5
-                last_idx += 5
+                first_idx += self.minimum_holding_time
+                last_idx += self.minimum_holding_time
             
             if action == 1:
                 self.longs += 1
@@ -224,4 +224,6 @@ class StockEnv(Env):
         #self.state = torch.from_numpy(self.state)
         self.state_idx = [first_valid_name, first_trading_name]
         #print('yo', np.shape(self.state))
+        self.win_ratio = 0
+        self.long_ratio = 0
         return self.state
