@@ -157,9 +157,9 @@ class StockEnv(Env):
             if self.position_log == 2 and self.reward < 0:
                 self.reward = self.reward * 1.5
 
-            if self.reward > 0 and self.streak >= 1:
+            '''if self.reward > 0 and self.streak >= 1:
                 self.reward = self.reward * self.streak
-            '''elif self.reward < 0 and self.streak <= 1:
+            elif self.reward < 0 and self.streak <= 1:
                 self.reward = abs(self.reward) * abs(self.streak) / self.holding_time
                 self.reward = -self.reward'''
             
