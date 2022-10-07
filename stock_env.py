@@ -91,6 +91,8 @@ class StockEnv(Env):
         self.streak = 0
         # Hold time of position
         self.holding_time = 0
+        # Percent decay per day holding position
+        self.decay = 0.01
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -183,7 +185,7 @@ class StockEnv(Env):
             #self.reward = 0.0
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
         else:
-            self.reward = 0
+            self.reward = -self.transaction_value * self.decay / steps_in_trading_day
             self.holding_time += 1
 
         self.win_ratio = self.wins / (self.wins + self.losses + 1)
