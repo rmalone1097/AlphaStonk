@@ -127,27 +127,16 @@ class StockEnv(Env):
 
         df_slice = self.df.iloc[first_idx:last_idx]
         self.state = df_slice.loc[:, 'open':].to_numpy()
-
         self.current_price = df_slice.iloc[-1]['close']
+
+        # Worth of position, calculated as percentage change multiplied by set transaction value
+        position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
 
         # Close old position and open new one
         if self.position_log != action:
-            position_value = 0
 
-            # If there was no existing position don't give any reward
-            if self.position_log == 0:
-                self.reward = 0
-
-            # If there was a short or long position that was closed out, grant reward as defined by reward function
-            elif self.position_log == 1:
-                position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
-                self.reward = position_value
-
-            elif self.position_log == 2:
-                position_value = -(self.current_price - self.start_price) / self.start_price * self.transaction_value
-                self.reward = position_value
-            
-            if self.reward > 0:
+            # Agent closed so position value is final. Can be used to tally win/loss
+            if position_value > 0:
                 self.wins += 1
             else:
                 self.losses += 1
@@ -160,7 +149,7 @@ class StockEnv(Env):
             else:
                 self.streak = 0
             
-            self.net_worth += self.reward
+            self.net_worth += position_value
 
             '''if self.position_log == 1 and self.reward < 0:
                 self.reward = self.reward * 1.5
@@ -173,6 +162,7 @@ class StockEnv(Env):
                 first_idx += self.minimum_holding_time
                 last_idx += self.minimum_holding_time
             
+            # Count longs and shorts
             if action == 1:
                 self.longs += 1
             elif action == 2:
@@ -188,8 +178,13 @@ class StockEnv(Env):
             steps_in_trading_day = 390
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
 
+        # Posiiton is held. Grant reward based on reward function and position value
         else:
-            self.reward = -self.transaction_value * self.decay / steps_in_trading_day
+            if position_value < 0:
+                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
+            else:
+                self.reward = position_value - (position_value * time) / self.decay_factor
+
             self.holding_time += 1
 
         self.win_ratio = self.wins / (self.wins + self.losses + 1)
