@@ -138,21 +138,19 @@ class StockEnv(Env):
             if self.position_log == 0:
                 self.reward = 0
 
-            # If there was a short or long position that was closed out, reward equals position value
+            # If there was a short or long position that was closed out, grant reward as defined by reward function
             elif self.position_log == 1:
                 position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
-                if self.reward > 0:
-                    self.wins += 1
-                elif self.reward < 0:
-                    self.losses += 1
+
             elif self.position_log == 2:
                 position_value = -(self.current_price - self.start_price) / self.start_price * self.transaction_value
                 self.reward = position_value
-                if self.reward > 0:
-                    self.wins += 1
-                elif self.reward < 0:
-                    self.losses += 1
+            
+            if self.reward > 0:
+                self.wins += 1
+            else:
+                self.losses += 1
             
             # Maintains streak, which is logged but currently unused
             if position_value > 0 and self.streak >= 0:
@@ -164,11 +162,11 @@ class StockEnv(Env):
             
             self.net_worth += self.reward
 
-            if self.position_log == 1 and self.reward < 0:
+            '''if self.position_log == 1 and self.reward < 0:
                 self.reward = self.reward * 1.5
 
             if self.position_log == 2 and self.reward < 0:
-                self.reward = self.reward * 1.5
+                self.reward = self.reward * 1.5'''
             
             # Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
@@ -184,12 +182,12 @@ class StockEnv(Env):
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
 
-        # If it's holding no position, slight penalty equal to 1% loss per day
+        # If holding no position, slight penalty equal to 1% loss per day
         elif self.position_log == 0:
             percentage_multiplier = 0.01
             steps_in_trading_day = 390
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
-            
+
         else:
             self.reward = -self.transaction_value * self.decay / steps_in_trading_day
             self.holding_time += 1
