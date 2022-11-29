@@ -107,6 +107,7 @@ class StockEnv(Env):
             done = True
         else:
             done = False
+
         # If data point after last is after market close, find the next market open point
         if self.df.iloc[last_idx]['daily_candle_counter'] == 0:
             for i, row in enumerate(self.df.iloc[last_idx:].itertuples()):
@@ -114,11 +115,9 @@ class StockEnv(Env):
                 if row.daily_candle_counter != 0:
                     first_idx, last_idx = first_idx + i, last_idx + i
                     break
+
         df_slice = self.df.iloc[first_idx:last_idx]
-        #print(df_slice)
-        #print(action)
         self.state = df_slice.loc[:, 'open':].to_numpy()
-        #self.state = torch.from_numpy(self.state)
 
         self.current_price = df_slice.iloc[-1]['close']
 
@@ -158,12 +157,6 @@ class StockEnv(Env):
 
             if self.position_log == 2 and self.reward < 0:
                 self.reward = self.reward * 1.5
-
-            '''if self.reward > 0 and self.streak >= 1:
-                self.reward = self.reward * self.streak
-            elif self.reward < 0 and self.streak <= 1:
-                self.reward = abs(self.reward) * abs(self.streak) / self.holding_time
-                self.reward = -self.reward'''
             
             # Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
@@ -175,14 +168,12 @@ class StockEnv(Env):
             elif action == 2:
                 self.shorts += 1
             # Start price of new position is the current price
-            #self.pl_dict[self.reward] = [self.current_price, self.start_price, self.position_log]
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
         # If it's holding no position, slight penalty equal to 1% loss per day
         elif self.position_log == 0:
             percentage_multiplier = 0.01
             steps_in_trading_day = 390
-            #self.reward = 0.0
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
         else:
             self.reward = -self.transaction_value * self.decay / steps_in_trading_day
@@ -194,7 +185,6 @@ class StockEnv(Env):
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
-        #print(np.shape(self.state))
 
         return self.state, self.reward, done, info
 
@@ -202,20 +192,23 @@ class StockEnv(Env):
         pass
 
     def reset(self):
-        #super().reset(seed=seed)
         # Search through dataframe and look for first data point where market is open
         first_found = False
         first_trading_stamp = 0
+
         for i, row in enumerate(self.df.itertuples()):
             if row.daily_candle_counter != 0 and first_found == False:
                 first_found = True
+
                 # First market open data point
                 first_valid_day = datetime.datetime.fromtimestamp(int(row.timestamp) / 1000, pytz.timezone('US/Eastern'))
-                # Name, or set index of df, is expected to be timestep (milliseconds) and will be used to locate
-                # data points of interest
+
+                # Name, or set index of df, is expected to be timestep (milliseconds) and will be used to locate data points of interest
                 first_valid_name = i
+
                 # Calculation of first trading date, window days + 1
                 first_trading_day = first_valid_day + timedelta(days=self.window_days + 1)
+
                 # If Saturday or Sunday, get it to Monday
                 #TODO: i set this to 3 and 2 to fix a labor day bug. Remember that this should be 2 and 1
                 if first_trading_day.weekday() == 5:
@@ -223,16 +216,16 @@ class StockEnv(Env):
                 elif first_trading_day.weekday() == 6:
                     first_trading_day += timedelta(days=2)
                 assert (first_trading_day.hour, first_trading_day.minute) == (9, 30), "Calculation of first trading point is incorrect"
+
                 # Calculation of first trading point on first trading day (9:30AM EST on first trading day)
                 first_trading_stamp = int(round(first_trading_day.timestamp() * 1000))
+                
             if row.timestamp == first_trading_stamp:
                 first_trading_name = i
                 break
+
         # The state of the environment is the data slice that the agent will have access to to make a decision
-        #print(first_valid_day, first_trading_day)
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
         self.state = df_slice.loc[:, 'open':].to_numpy()
-        #self.state = torch.from_numpy(self.state)
         self.state_idx = [first_valid_name, first_trading_name]
-        #print('yo', np.shape(self.state))
         return self.state
