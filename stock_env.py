@@ -100,7 +100,7 @@ class StockEnv(Env):
         # Hold time of position
         self.holding_time = 0
         # Defined as the point at which a trade with a positive position value will yield 0 reward due to decay
-        self.decay_factor = 500
+        self.decay_factor = 1000
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
