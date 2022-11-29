@@ -57,7 +57,7 @@ class StockEnv(Env):
         self.df = df
         # Every transcation to have this value ($)
         self.transaction_value = 1000
-        # Net worth
+        # Net worth to track cumulative reward
         self.net_worth = 0
         # Variable to keep track of initial underlying at start of position
         self.start_price = 0
@@ -70,32 +70,41 @@ class StockEnv(Env):
         # Log to keep track of trades
         self.trade_log = []
         # Timestep length to update action
-        self.timestep = 5
+        self.timestep = 1
+        # Logged value representing amount of long positions
         self.longs = 0
+        # Logged value representing amount of short positions
         self.shorts = 0
+        # Logged value representing number of positive trades
         self.wins = 0
+        # Logged value representing number of negative trades
         self.losses = 0
+        # logged value defined as wins over total trades
         self.win_ratio = 0
+        # Reward
         self.reward = 0
+        # Action
         self.action = 0
+        # Current price
         self.current_price = 0
         # Minimum time (in minutes) a position must be held
-        self.minimum_holding_time = 5
+        self.minimum_holding_time = 1
         # Holding time for a position
         self.holding_time = 0
         # Action log
         self.action_log = 0
-        # Dictionary of open-close price and PL
+        # Dictionary of open-close price and PL (unused)
         self.pl_dict = {}
         # Positive if winning streak, negative if losing streak
         self.streak = 0
         # Hold time of position
         self.holding_time = 0
-        # Percent decay per day holding position
-        self.decay = 0.01
+        # Defined as the point at which a trade with a positive position value will yield 0 reward due to decay
+        self.decay_factor = 500
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
+
         # Step data window 1 candle
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
@@ -124,9 +133,11 @@ class StockEnv(Env):
         # Close old position and open new one
         if self.position_log != action:
             position_value = 0
+
             # If there was no existing position don't give any reward
             if self.position_log == 0:
                 self.reward = 0
+
             # If there was a short or long position that was closed out, reward equals position value
             elif self.position_log == 1:
                 position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
@@ -143,6 +154,7 @@ class StockEnv(Env):
                 elif self.reward < 0:
                     self.losses += 1
             
+            # Maintains streak, which is logged but currently unused
             if position_value > 0 and self.streak >= 0:
                 self.streak += 1
             elif position_value < 0 and self.streak <= 0:
@@ -167,14 +179,17 @@ class StockEnv(Env):
                 self.longs += 1
             elif action == 2:
                 self.shorts += 1
+
             # Start price of new position is the current price
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
+
         # If it's holding no position, slight penalty equal to 1% loss per day
         elif self.position_log == 0:
             percentage_multiplier = 0.01
             steps_in_trading_day = 390
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
+            
         else:
             self.reward = -self.transaction_value * self.decay / steps_in_trading_day
             self.holding_time += 1
@@ -219,7 +234,7 @@ class StockEnv(Env):
 
                 # Calculation of first trading point on first trading day (9:30AM EST on first trading day)
                 first_trading_stamp = int(round(first_trading_day.timestamp() * 1000))
-                
+
             if row.timestamp == first_trading_stamp:
                 first_trading_name = i
                 break
