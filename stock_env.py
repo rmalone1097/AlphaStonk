@@ -3,6 +3,7 @@ from gym.spaces import Discrete, Box
 from typing import Optional
 import datetime
 
+import torch
 import numpy as np
 import pandas as pd
 from data_utils import *
@@ -68,16 +69,44 @@ class StockEnv(Env):
         self.position_log = 0
         # Log to keep track of trades
         self.trade_log = []
+        # Timestep length to update action
+        self.timestep = 5
+        self.longs = 0
+        self.shorts = 0
+        self.wins = 0
+        self.losses = 0
+        self.win_ratio = 0
         self.reward = 0
         self.action = 0
         self.current_price = 0
+        # Minimum time (in minutes) a position must be held
+        self.minimum_holding_time = 5
+        # Holding time for a position
+        self.holding_time = 0
+        # Action log
+        self.action_log = 0
+        # Dictionary of open-close price and PL
+        self.pl_dict = {}
+        # Positive if winning streak, negative if losing streak
+        self.streak = 0
+        # Hold time of position
+        self.holding_time = 0
+        # Percent decay per day holding position
+        self.decay = 0.01
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
         # Step data window 1 candle
-        done = False
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
+        if last_idx + self.timestep >= len(self.df):
+            self.win_ratio = 0
+            self.long_ratio = 0
+            self.position_log = 0
+            action = 0
+            done = True
+        else:
+            done = False
         # If data point after last is after market close, find the next market open point
         if self.df.iloc[last_idx]['daily_candle_counter'] == 0:
             for i, row in enumerate(self.df.iloc[last_idx:].itertuples()):
@@ -85,53 +114,87 @@ class StockEnv(Env):
                 if row.daily_candle_counter != 0:
                     first_idx, last_idx = first_idx + i, last_idx + i
                     break
-                if i + last_idx == len(self.df):
-                    done = True
         df_slice = self.df.iloc[first_idx:last_idx]
         #print(df_slice)
         #print(action)
-        self.state = df_slice.loc[:, 'open':].to_numpy().flatten()
+        self.state = df_slice.loc[:, 'open':].to_numpy()
+        #self.state = torch.from_numpy(self.state)
 
-        # Apply action
-        if self.position_log == 0:
-            # Open position if action isn't 0
-            if action != 0:
-                self.start_price = df_slice.iloc[-1]['close']
-                self.reward = 0.0
-            # Action is still 0, slight punishment that will be equal to 1% loss per day
+        self.current_price = df_slice.iloc[-1]['close']
+
+        # Close old position and open new one
+        if self.position_log != action:
+            position_value = 0
+            # If there was no existing position don't give any reward
+            if self.position_log == 0:
+                self.reward = 0
+            # If there was a short or long position that was closed out, reward equals position value
+            elif self.position_log == 1:
+                position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
+                self.reward = position_value
+                if self.reward > 0:
+                    self.wins += 1
+                elif self.reward < 0:
+                    self.losses += 1
+            elif self.position_log == 2:
+                position_value = -(self.current_price - self.start_price) / self.start_price * self.transaction_value
+                self.reward = position_value
+                if self.reward > 0:
+                    self.wins += 1
+                elif self.reward < 0:
+                    self.losses += 1
+            
+            if position_value > 0 and self.streak >= 0:
+                self.streak += 1
+            elif position_value < 0 and self.streak <= 0:
+                self.streak -= 1
             else:
-                percentage_multiplier = 0.01
-                steps_in_trading_day = 390
-                #self.reward = 0.0
-                self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
-            self.position_log = action
-
-        elif self.position_log == 1:
-            # Had long position. Update position value (and reward. Might want to look into incentives to hold good positions)
-            self.current_price = df_slice.iloc[-1]['close']
-            # Add change in price, representing long postion
-            position_value = self.transaction_value + (self.current_price - self.start_price) / self.start_price * self.transaction_value
-            if action != self.position_log:
-                self.reward = position_value - self.transaction_value
-                if self.reward < 0:
-                    self.reward *= 1.15
+                self.streak = 0
+            
             self.net_worth += self.reward
-            self.position_log = action
 
-        elif self.position_log == 2:
-            # Had short position. Update position value (and reward. Might want to look into incentives to hold good positions)
-            self.current_price = df_slice.iloc[-1]['close']
-            # Negate change in price, representing short position
-            position_value = self.transaction_value - (self.current_price - self.start_price) / self.start_price * self.transaction_value
-            if action != self.position_log:
-                self.reward = position_value - self.transaction_value
-                if self.reward < 0:
-                    self.reward *= 1.15
-            self.net_worth += self.reward
-            self.position_log = action
+            if self.position_log == 1 and self.reward < 0:
+                self.reward = self.reward * 1.5
+
+            if self.position_log == 2 and self.reward < 0:
+                self.reward = self.reward * 1.5
+
+            '''if self.reward > 0 and self.streak >= 1:
+                self.reward = self.reward * self.streak
+            elif self.reward < 0 and self.streak <= 1:
+                self.reward = abs(self.reward) * abs(self.streak) / self.holding_time
+                self.reward = -self.reward'''
+            
+            # Skip amount of canldes specified by timestep once a position is taken
+            if action != 0:
+                first_idx += self.minimum_holding_time
+                last_idx += self.minimum_holding_time
+            
+            if action == 1:
+                self.longs += 1
+            elif action == 2:
+                self.shorts += 1
+            # Start price of new position is the current price
+            #self.pl_dict[self.reward] = [self.current_price, self.start_price, self.position_log]
+            self.start_price = self.current_price
+            self.holding_time = self.minimum_holding_time
+        # If it's holding no position, slight penalty equal to 1% loss per day
+        elif self.position_log == 0:
+            percentage_multiplier = 0.01
+            steps_in_trading_day = 390
+            #self.reward = 0.0
+            self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
+        else:
+            self.reward = -self.transaction_value * self.decay / steps_in_trading_day
+            self.holding_time += 1
+
+        self.win_ratio = self.wins / (self.wins + self.losses + 1)
+        self.long_ratio = self.longs / (self.longs + self.shorts + 1)
+        self.position_log = action
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
+        #print(np.shape(self.state))
 
         return self.state, self.reward, done, info
 
@@ -168,7 +231,8 @@ class StockEnv(Env):
         # The state of the environment is the data slice that the agent will have access to to make a decision
         #print(first_valid_day, first_trading_day)
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = df_slice.loc[:, 'open':].to_numpy().flatten()
+        self.state = df_slice.loc[:, 'open':].to_numpy()
+        #self.state = torch.from_numpy(self.state)
         self.state_idx = [first_valid_name, first_trading_name]
-        #print(np.shape(self.state))
+        #print('yo', np.shape(self.state))
         return self.state

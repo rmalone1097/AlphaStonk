@@ -44,10 +44,3 @@ def write_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str,
 def df_builder(path_to_csv:str):
     df = pd.read_csv(path_to_csv, header=0)
     return df
-
-# Polygon outputs 5000 data points max about 5 days with pre/post data
-def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, timestamp:str='minute'):
-    
-
-file_path = write_data_to_file('AAPL', 1, '2022-05-19', '2022-05-20')
-df = df_builder(file_path)
