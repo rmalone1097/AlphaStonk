@@ -135,7 +135,7 @@ class StockEnv(Env):
         # Close old position and open new one
         if self.position_log != action:
 
-            # Agent closed so position value is final. Can be used to tally win/loss
+            # Agent closed position so position value is final. Can be used to tally win/loss
             if position_value > 0:
                 self.wins += 1
             else:
