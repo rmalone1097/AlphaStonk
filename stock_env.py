@@ -130,7 +130,10 @@ class StockEnv(Env):
         self.current_price = df_slice.iloc[-1]['close']
 
         # Worth of position, calculated as percentage change multiplied by set transaction value
-        position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
+        if self.start_price != 0:
+            position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
+        else:
+            position_value = 0
 
         # Close old position and open new one
         if self.position_log != action:
@@ -149,7 +152,10 @@ class StockEnv(Env):
             else:
                 self.streak = 0
             
-            self.net_worth += position_value
+            if self.position_log == 1:
+                self.net_worth += position_value
+            elif self.position_log == 2:
+                self.net_worth += -position_value
 
             '''if self.position_log == 1 and self.reward < 0:
                 self.reward = self.reward * 1.5
@@ -180,10 +186,16 @@ class StockEnv(Env):
 
         # Posiiton is held. Grant reward based on reward function and position value
         else:
-            if position_value < 0:
-                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
-            else:
-                self.reward = position_value - (position_value * time) / self.decay_factor
+            if self.position_log == 1:
+                if position_value < 0:
+                    self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
+                else:
+                    self.reward = position_value - (position_value * self.holding_time) / self.decay_factor
+            elif self.position_log == 2:
+                if position_value < 0:
+                    self.reward = -(-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
+                else:
+                    self.reward = -position_value - (position_value * self.holding_time) / self.decay_factor
 
             self.holding_time += 1
 
@@ -235,5 +247,6 @@ class StockEnv(Env):
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
         self.state = df_slice.loc[:, 'open':].to_numpy()
+        print(np.shape(self.state))
         self.state_idx = [first_valid_name, first_trading_name]
         return self.state
