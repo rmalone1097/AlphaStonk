@@ -9,17 +9,26 @@ class CustomCNN(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Box, features_dim:int=1024):
         super(CustomCNN, self).__init__(observation_space, features_dim)
         n_input_channels = observation_space.shape[1]
+        #print(type(n_input_channels))
         self.cnn = nn.Sequential(
-            nn.Conv1d(n_input_channels, 32, 1, padding='same'),
+            nn.Conv1d(n_input_channels, 64, 1, padding='same'),
             nn.Tanh(),
-            nn.MaxPool1d(1, padding='same'),
+            nn.MaxPool1d(1),
             nn.ReLU(),
             nn.Flatten()
         )
 
-        with torch.no_grad():
-            n_flatten = self.cnn(torch.as_tensor(observation_space.sample()[None]).float).shape[1]
-        self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLI())
+        self.linear = nn.Sequential(
+            nn.Linear(1950*64 + n_input_channels, features_dim), 
+            nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        return self.linear(self.cnn(observations))
+        observations  = torch.permute(observations, (0, 2, 1))
+        # Flatten last observation and add it to features
+        last_obs = observations[:, :, -1]
+        #print(last_obs.shape)
+        features = self.cnn(observations)
+        features = torch.cat((features, last_obs), 1)
+        #print(features.shape)
+        return self.linear(features)
+        #return self.linear(self.cnn(obs))
