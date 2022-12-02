@@ -30,5 +30,5 @@ class RewardModel():
         plt.show()
     
 new = RewardModel([5, 10, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000], [-20,-5, 0.01, 5, 10, 15, 20])
-new.decayOne(500)
+new.decayOne(1000)
 new.plotRewards()
