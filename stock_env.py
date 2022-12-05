@@ -101,6 +101,14 @@ class StockEnv(Env):
         self.holding_time = 0
         # Defined as the point at which a trade with a positive position value will yield 0 reward due to decay
         self.decay_factor = 1000
+        # Track ROI
+        self.roi = 0
+        # Total ROI to compute average
+        self.total_roi = 0
+        # Total number of positions to compute ROI average
+        self.num_positions = 0
+        # Average ROI
+        self.average_roi = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -109,8 +117,12 @@ class StockEnv(Env):
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
         if last_idx + self.timestep >= len(self.df):
-            self.win_ratio = 0
-            self.long_ratio = 0
+            self.wins = 0
+            self.losses = 0
+            self.longs = 0
+            self.shorts = 0
+            self.total_roi = 0
+            self.num_positions = 0
             self.position_log = 0
             action = 0
             done = True
@@ -137,6 +149,13 @@ class StockEnv(Env):
 
         # Close old position and open new one
         if self.position_log != action:
+
+            # Position taken, add 1 to position count
+            self.num_positions += 1
+
+            # Calcualte final ROI and update total
+            self.roi = ((self.current_price - self.start_price) / self.start_price) * 100
+            self.total_roi += self.roi
 
             # Agent closed position so position value is final. Can be used to tally win/loss
             if position_value > 0:
@@ -201,6 +220,7 @@ class StockEnv(Env):
 
         self.win_ratio = self.wins / (self.wins + self.losses + 1)
         self.long_ratio = self.longs / (self.longs + self.shorts + 1)
+        self.average_roi = self.total_roi / self.num_positions
         self.position_log = action
         info = {}
         self.action = action
