@@ -60,7 +60,7 @@ class StockEnv(Env):
         # Net worth to track cumulative reward
         self.net_worth = 0
         # Variable to keep track of initial underlying at start of position
-        self.start_price = 0
+        self.start_price = 1
         # Observed state (data slice)
         self.state = None
         # List of indexes for ease of data frame iteration
@@ -75,6 +75,8 @@ class StockEnv(Env):
         self.longs = 0
         # Logged value representing amount of short positions
         self.shorts = 0
+        # Logged value representing ratio of long positions to total positions
+        self.long_ratio = 0
         # Logged value representing number of positive trades
         self.wins = 0
         # Logged value representing number of negative trades
@@ -142,10 +144,7 @@ class StockEnv(Env):
         self.current_price = df_slice.iloc[-1]['close']
 
         # Worth of position, calculated as percentage change multiplied by set transaction value
-        if self.start_price != 0:
-            position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
-        else:
-            position_value = 0
+        position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
 
         # Close old position and open new one
         if self.position_log != action:
@@ -218,9 +217,10 @@ class StockEnv(Env):
 
             self.holding_time += 1
 
-        self.win_ratio = self.wins / (self.wins + self.losses + 1)
-        self.long_ratio = self.longs / (self.longs + self.shorts + 1)
-        self.average_roi = self.total_roi / self.num_positions
+        if self.num_positions != 0:
+            self.win_ratio = self.wins / (self.wins + self.losses)
+            self.long_ratio = self.longs / (self.longs + self.shorts)
+            self.average_roi = self.total_roi / self.num_positions
         self.position_log = action
         info = {}
         self.action = action
@@ -267,6 +267,7 @@ class StockEnv(Env):
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
         self.state = df_slice.loc[:, 'open':].to_numpy()
-        print(np.shape(self.state))
+        self.current_price = self.state[9, 3]
+        self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
         return self.state
