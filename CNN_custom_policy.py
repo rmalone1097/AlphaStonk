@@ -14,7 +14,7 @@ class CustomCNN(BaseFeaturesExtractor):
             nn.ReLU(),
             nn.Conv1d(32, 64, kernel_size=5, padding='same'),
             nn.ReLU(),
-            nn.Conv1d(64, 64, kernel_size=3),
+            nn.Conv1d(64, 64, kernel_size=3, padding='same'),
             nn.ReLU(),
             nn.Flatten()
         )
@@ -29,6 +29,7 @@ class CustomCNN(BaseFeaturesExtractor):
         last_obs = observations[:, :, -1]
         #print(last_obs.shape)
         features = self.cnn(observations)
+        #print(features.shape)
         features = torch.cat((features, last_obs), 1)
         #print(features.shape)
         return self.linear(features)
