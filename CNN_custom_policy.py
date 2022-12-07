@@ -25,12 +25,11 @@ class CustomCNN(BaseFeaturesExtractor):
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         observations  = torch.permute(observations, (0, 2, 1))
-        # Flatten last observation and add it to features
+        # Flatten last observation and add it to features - last_obs shape [batch_size, n_input_channels]
         last_obs = observations[:, :, -1]
-        #print(last_obs.shape)
+        # features shape [batch_size, features_dim]
         features = self.cnn(observations)
-        #print(features.shape)
+        # features shape now [batch_size, features_dim + n_input_channels]
         features = torch.cat((features, last_obs), 1)
-        #print(features.shape)
+
         return self.linear(features)
-        #return self.linear(self.cnn(obs))
