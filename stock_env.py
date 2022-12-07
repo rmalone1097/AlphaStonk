@@ -196,11 +196,13 @@ class StockEnv(Env):
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
 
-        # If holding no position, slight penalty equal to 1% loss per day
+            '''
+        # If holding no position, slight penalty equal to 1% loss per day DEPRICATED
         elif self.position_log == 0:
             percentage_multiplier = 0.01
             steps_in_trading_day = 390
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
+            '''
 
         # Posiiton is held. Grant reward based on reward function and position value
         else:
@@ -211,9 +213,9 @@ class StockEnv(Env):
                     self.reward = position_value - (position_value * self.holding_time) / self.decay_factor
             elif self.position_log == 2:
                 if position_value < 0:
-                    self.reward = -(-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
+                    self.reward = -((-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2)
                 else:
-                    self.reward = -position_value - (position_value * self.holding_time) / self.decay_factor
+                    self.reward = -(position_value - (position_value * self.holding_time) / self.decay_factor)
 
             self.holding_time += 1
 
