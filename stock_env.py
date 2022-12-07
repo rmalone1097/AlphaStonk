@@ -143,8 +143,13 @@ class StockEnv(Env):
         self.state = df_slice.loc[:, 'open':].to_numpy()
         self.current_price = df_slice.iloc[-1]['close']
 
-        # Worth of position, calculated as percentage change multiplied by set transaction value
-        position_value = (self.current_price - self.start_price) / self.start_price * self.transaction_value
+        # Worth of position, calculated as percentage change
+        if self.position_log == 1:
+            position_value = (self.current_price - self.start_price) / self.start_price * 100
+        elif self.position_log == 2:
+            position_value = (self.start_price - self.current_price) / self.start_price * 100
+        else:
+            position_value = 0
 
         # Close old position and open new one
         if self.position_log != action:
@@ -153,7 +158,7 @@ class StockEnv(Env):
             self.num_positions += 1
 
             # Calcualte final ROI and update total
-            self.roi = ((self.current_price - self.start_price) / self.start_price) * 100
+            self.roi = position_value
             self.total_roi += self.roi
 
             # Agent closed position so position value is final. Can be used to tally win/loss
@@ -169,11 +174,6 @@ class StockEnv(Env):
                 self.streak -= 1
             else:
                 self.streak = 0
-            
-            if self.position_log == 1:
-                self.net_worth += position_value
-            elif self.position_log == 2:
-                self.net_worth += -position_value
 
             '''if self.position_log == 1 and self.reward < 0:
                 self.reward = self.reward * 1.5
@@ -206,16 +206,10 @@ class StockEnv(Env):
 
         # Posiiton is held. Grant reward based on reward function and position value
         else:
-            if self.position_log == 1:
-                if position_value < 0:
-                    self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
-                else:
-                    self.reward = position_value - (position_value * self.holding_time) / self.decay_factor
-            elif self.position_log == 2:
-                if position_value < 0:
-                    self.reward = -((-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2)
-                else:
-                    self.reward = -(position_value - (position_value * self.holding_time) / self.decay_factor)
+            if position_value < 0:
+                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
+            else:
+                self.reward = position_value - (position_value * self.holding_time) / self.decay_factor
 
             self.holding_time += 1
 

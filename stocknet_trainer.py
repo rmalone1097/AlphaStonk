@@ -61,6 +61,7 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/streak', self.training_env.get_attr('streak')[0])
         self.logger.record('variables/holding_time', self.training_env.get_attr('holding_time')[0])
         self.logger.record('variables/roi', self.training_env.get_attr('roi')[0])
+        self.logger.record('variables/total_roi', self.training_env.get_attr('total_roi')[0])
         self.logger.record('variables/average_roi', self.training_env.get_attr('average_roi')[0])
         #self.logger.record('reward', reward)
         return True
