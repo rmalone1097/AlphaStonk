@@ -31,5 +31,6 @@ class CustomCNN(BaseFeaturesExtractor):
         features = self.cnn(observations)
         # features shape now [batch_size, features_dim + n_input_channels]
         features = torch.cat((features, last_obs), 1)
+        features = self.linear(features)
 
-        return self.linear(features)
+        return features

@@ -53,6 +53,7 @@ class StockEnv(Env):
         # Window width of data slice per step (days)
         self.window_days = 5
         # Number of candles by number of featuers
+        # TODO add previous action and holding time to state
         self.observation_space = Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float64)
         self.df = df
         # Every transcation to have this value ($)
