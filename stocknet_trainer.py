@@ -9,6 +9,7 @@ import time
 import os
 
 from CNN_custom_policy import CustomCNN
+from custom_combined_extractor import CustomCombinedExtractor
 
 pickle_dir = 'C:\\Users\\water\\documents\\datasets\\stock_data\\'
 df = pd.read_pickle(pickle_dir + 'SPY_minute_2012-08-22_built.pkl')
