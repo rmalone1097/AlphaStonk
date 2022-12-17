@@ -120,6 +120,8 @@ class StockEnv(Env):
         self.num_positions = 0
         # Average ROI
         self.average_roi = 0
+        # Minimum ROI for positive reward (percentage)
+        self.minimum_roi = 0.2
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -216,9 +218,11 @@ class StockEnv(Env):
         # Posiiton is held. Grant reward based on reward function and position value
         else:
             if position_value < 0:
-                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
-            else:
-                self.reward = position_value - (position_value * self.holding_time) / self.decay_factor
+                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2 - self.minimum_roi
+            elif position_value > 0:
+                self.reward = position_value - (position_value * self.holding_time) / self.decay_factor - self.minimum_roi
+            elif position_value == 0:
+                self.reward = 0
 
             self.holding_time += 1
 
