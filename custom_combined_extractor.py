@@ -11,7 +11,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         # for vector extractor for total featuers_dim, which is self.features_dim later on
         super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
 
-        n_input_channels = observation_space.shape[1]
+        n_input_channels = observation_space['slice'].shape[1]
         self.cnn = nn.Sequential(
             nn.Conv1d(n_input_channels, 32, kernel_size=7, padding='same'),
             nn.ReLU(),
@@ -23,7 +23,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         )
 
         self.linear = nn.Sequential(
-            nn.Linear(1950*64 + n_input_channels, features_dim), 
+            nn.Linear(observation_space['slice'].shape[0]*64, features_dim), 
             nn.ReLU())
 
         extractors = {}
@@ -35,7 +35,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
             if key == "slice":
                 # We will just downsample one channel of the image by 4x4 and flatten.
                 # Assume the image is single-channel (subspace.shape[0] == 0)
-                extractors[key] = self.cnn
+                extractors[key] = nn.Sequential(self.cnn, self.linear)
                 total_concat_size += features_dim
             elif key == "vector":
                 # Run through a simple MLP
@@ -52,6 +52,8 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
 
         # self.extractors contain nn.Modules that do all the processing.
         for key, extractor in self.extractors.items():
+            if key == 'slice':
+                observations['slice']  = torch.permute(observations['slice'], (0, 2, 1))
             encoded_tensor_list.append(extractor(observations[key]))
         # Return a (B, self._features_dim) PyTorch tensor, where B is batch dimension.
         return torch.cat(encoded_tensor_list, dim=1)
