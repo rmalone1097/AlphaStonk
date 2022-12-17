@@ -39,8 +39,8 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 total_concat_size += features_dim
             elif key == "vector":
                 # Run through a simple MLP
-                extractors[key] = nn.Linear(subspace.shape[0], 16)
-                total_concat_size += 16
+                extractors[key] = nn.Linear(subspace.shape[0], 4)
+                total_concat_size += 4
 
         self.extractors = nn.ModuleDict(extractors)
 
