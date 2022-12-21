@@ -84,6 +84,10 @@ class StockEnv(Env):
         self.longs = 0
         # Logged value representing amount of short positions
         self.shorts = 0
+        # Logged value representing candles passed with no position
+        self.zeros = 0
+        # Logged value representing amount of zeros to total amount of candles
+        self.zero_ratio = 0
         # Logged value representing ratio of long positions to total positions
         self.long_ratio = 0
         # Logged value representing number of positive trades
@@ -202,6 +206,8 @@ class StockEnv(Env):
                 self.longs += 1
             elif action == 2:
                 self.shorts += 1
+            elif action == 0:
+                self.zeros += 1
 
             # Start price of new position is the current price
             self.start_price = self.current_price
@@ -229,6 +235,7 @@ class StockEnv(Env):
         if self.num_positions != 0:
             self.win_ratio = self.wins / (self.wins + self.losses)
             self.long_ratio = self.longs / (self.longs + self.shorts)
+            self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
             self.average_roi = self.total_roi / self.num_positions
         self.position_log = action
         info = {}

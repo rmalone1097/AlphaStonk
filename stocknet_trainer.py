@@ -64,6 +64,7 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/roi', self.training_env.get_attr('roi')[0])
         self.logger.record('variables/total_roi', self.training_env.get_attr('total_roi')[0])
         self.logger.record('variables/average_roi', self.training_env.get_attr('average_roi')[0])
+        self.logger.record('variables/zero_ratio', self.training_env.get_attr('zero_ratio')[0])
         #self.logger.record('reward', reward)
         return True
 
