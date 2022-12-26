@@ -9,6 +9,7 @@ import time
 import os
 
 from CNN_custom_policy import CustomCNN
+from custom_combined_extractor import CustomCombinedExtractor
 
 pickle_dir = 'C:\\Users\\water\\documents\\datasets\\stock_data\\'
 df = pd.read_pickle(pickle_dir + 'SPY_minute_2012-08-22_built.pkl')
@@ -30,13 +31,13 @@ if not os.path.exists(logs_dir):
 env.reset()
 
 policy_kwargs = dict(
-    features_extractor_class=CustomCNN,
+    features_extractor_class=CustomCombinedExtractor,
     features_extractor_kwargs=dict(features_dim=1024)
 )
 
 #model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir)
 #model = PPO.load(cwd + '\\models\\PPOflat2epoch\\982800', env=env)
-model = PPO('MlpPolicy', env, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=64, seed=4)
+model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=64, seed=4)
 
 class TensorboardCallback(BaseCallback):
     def __init__(self, verbose=0):
@@ -63,6 +64,7 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/roi', self.training_env.get_attr('roi')[0])
         self.logger.record('variables/total_roi', self.training_env.get_attr('total_roi')[0])
         self.logger.record('variables/average_roi', self.training_env.get_attr('average_roi')[0])
+        self.logger.record('variables/zero_ratio', self.training_env.get_attr('zero_ratio')[0])
         #self.logger.record('reward', reward)
         return True
 

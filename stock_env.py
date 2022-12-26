@@ -1,5 +1,5 @@
 from gym import Env
-from gym.spaces import Discrete, Box
+from gym.spaces import Discrete, Box, Dict
 from typing import Optional
 import datetime
 
@@ -20,7 +20,7 @@ class StockEnv(Env):
         | 2   | Short position         |
 
         ### Observation Space
-        The observation is a `ndarray` with shape `(candles,featuers)` where the elements correspond to the following:
+        Slice is a `ndarray` with shape `(candles,featuers)` where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | open                                 | 0    | Inf | dollars ($)  |
@@ -48,13 +48,21 @@ class StockEnv(Env):
         | 22  | ema_20_day                           | 0    | Inf | dollars ($)  |
         | 23  | ema_50_day                           | 0    | Inf | dollars ($)  |
         | 24  | ema_100_day                          | 0    | Inf | dollars ($)  |
+        
+        Vector is a 'ndarray' with shape '(2,)' where the elements correspond to the following:
+        | Num | Observation                          | Min  | Max | Unit         |
+        |-----|--------------------------------------|------|-----|--------------|
+        | 0   | action_taken                         | 0    | 2   | discrete     |
+        | 1   | holding_time                         | 0    | Inf | timesteps    |
         '''
         self.action_space = Discrete(3)
         # Window width of data slice per step (days)
         self.window_days = 5
-        # Number of candles by number of featuers
-        # TODO add previous action and holding time to state
-        self.observation_space = Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float16)
+        # Observation dictionary
+        self.observation_space = Dict({
+            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float32),
+            'vector': Box(low=np.array([0, 0]), high=np.array([2, np.inf]), dtype=np.float32)
+        })
         self.df = df
         # Every transcation to have this value ($)
         self.transaction_value = 1000
@@ -76,6 +84,10 @@ class StockEnv(Env):
         self.longs = 0
         # Logged value representing amount of short positions
         self.shorts = 0
+        # Logged value representing candles passed with no position
+        self.zeros = 0
+        # Logged value representing amount of zeros to total amount of candles
+        self.zero_ratio = 0
         # Logged value representing ratio of long positions to total positions
         self.long_ratio = 0
         # Logged value representing number of positive trades
@@ -112,6 +124,8 @@ class StockEnv(Env):
         self.num_positions = 0
         # Average ROI
         self.average_roi = 0
+        # Minimum ROI for positive reward (percentage)
+        self.minimum_roi = 0.2
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -141,7 +155,7 @@ class StockEnv(Env):
                     break
 
         df_slice = self.df.iloc[first_idx:last_idx]
-        self.state = df_slice.loc[:, 'open':].to_numpy()
+        self.state['slice'] = df_slice.loc[:, 'open':].to_numpy()
         self.current_price = df_slice.iloc[-1]['close']
 
         # Worth of position, calculated as percentage change
@@ -192,6 +206,8 @@ class StockEnv(Env):
                 self.longs += 1
             elif action == 2:
                 self.shorts += 1
+            elif action == 0:
+                self.zeros += 1
 
             # Start price of new position is the current price
             self.start_price = self.current_price
@@ -208,20 +224,25 @@ class StockEnv(Env):
         # Posiiton is held. Grant reward based on reward function and position value
         else:
             if position_value < 0:
-                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2
-            else:
-                self.reward = position_value - (position_value * self.holding_time) / self.decay_factor
+                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2 - self.minimum_roi
+            elif position_value > 0:
+                self.reward = position_value - (position_value * self.holding_time) / self.decay_factor - self.minimum_roi
+            elif position_value == 0:
+                self.reward = 0
 
             self.holding_time += 1
 
         if self.num_positions != 0:
             self.win_ratio = self.wins / (self.wins + self.losses)
             self.long_ratio = self.longs / (self.longs + self.shorts)
+            self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
             self.average_roi = self.total_roi / self.num_positions
         self.position_log = action
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
+
+        self.state['vector'] = np.array([action, self.holding_time])
 
         return self.state, self.reward, done, info
 
@@ -263,8 +284,8 @@ class StockEnv(Env):
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = df_slice.loc[:, 'open':].to_numpy()
-        self.current_price = self.state[9, 3]
+        self.state = {'slice': df_slice.loc[:, 'open':].to_numpy(), 'vector': np.array([0, 0], dtype=np.float32)}
+        self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
         return self.state

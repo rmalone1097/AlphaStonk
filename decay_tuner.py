@@ -13,9 +13,9 @@ class RewardModel():
             reward_list = []
             for time in self.times_list:
                 if net < 0:
-                    reward = (-net - (-net * time) / decay_factor) + net*2
+                    reward = (-net - (-net * time) / decay_factor) + net*2 - 0.2
                 else:
-                    reward = net - (net * time) / decay_factor
+                    reward = net - (net * time) / decay_factor - 0.2
                 reward_list.append(reward)
 
             self.reward_lists.append(reward_list)
@@ -29,6 +29,6 @@ class RewardModel():
 
         plt.show()
     
-new = RewardModel([5, 10, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000], [-0.1,-0.05, 0.01, 0.05, 0.1, 0.15, 0.20])
+new = RewardModel([5, 10, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000], [-0.1,-0.05, 0.01, 0.05, 0.1, 0.15, 0.20, 0.5])
 new.decayOne(1000)
 new.plotRewards()
