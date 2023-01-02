@@ -7,13 +7,14 @@ from data_utils import *
 from stock_env import StockEnv
 import time
 import os
+from pathlib import Path
 
 from CNN_custom_policy import CustomCNN
 #from custom_combined_extractor import CustomCombinedExtractor
 from omni_scale_CNN import CustomCombinedExtractor
 
-pickle_dir = 'C:\\Users\\water\\desktop\\'
-df = pd.read_pickle(pickle_dir + 'SPY_minute_2012-08-22_built_gcp.pkl')
+pickle_dir = Path.home()
+df = pd.read_pickle(pickle_dir / 'SPY_minute_2012-08-22_built_gcp.pkl')
 trading_df = add_indicators(df)
 trading_df = trading_df.fillna(0)
 env = StockEnv(trading_df)
