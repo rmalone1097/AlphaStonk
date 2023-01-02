@@ -17,19 +17,52 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         # for vector extractor for total featuers_dim, which is self.features_dim later on
         super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
 
-        n_input_features = observation_space['slice'].shape[0]
-        n_input_channels = observation_space['slice'].shape[1]
+        self.n_input_features = observation_space['slice'].shape[0]
+        self.n_input_channels = observation_space['slice'].shape[1]
 
         self.kernels_1 = nn.ModuleList()
         conv_1_length = 0
 
         for p in prime_list:
-            if p >= n_input_features // 2:
+            if p >= self.n_input_features // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_1.append(conv)
-                conv_1_length += n_input_features - p + 1
+                conv_1_length += self.n_input_features - p + 1
+        
+        self.kernels_2 = nn.ModuleList()
+        conv_2_length = 0
+
+        for p in prime_list:
+            if p >= conv_1_length // 2:
+                conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
+                self.kernels_2.append(conv)
+                conv_2_length += conv_1_length - p + 1
         
         self.kernels_3 = nn.ModuleList(nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same'))
+        conv_3_length = conv_2_length + conv_2_length - 1
+
+        concat_1 = conv_3_length * self.n_input_channels
+
+        self.kernels_4 = nn.ModuleList()
+        conv_4_length = 0
+
+        for p in prime_list:
+            if p >= concat_1 // 2:
+                conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
+                self.kernels_4.append(conv)
+                conv_4_length += concat_1 - p + 1
+        
+        self.kernels_5 = nn.ModuleList()
+        conv_5_length = 0
+
+        for p in prime_list:
+            if p >= conv_4_length // 2:
+                conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
+                self.kernels_5.append(conv)
+                conv_5_length += conv_4_length - p + 1
+        
+        self.kernels_6 = nn.ModuleList(nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same'))
+        conv_6_length = conv_5_length + conv_5_length - 1
         
         # Not including convolutions
         self.os_block_1 = nn.Sequential(
@@ -37,14 +70,33 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
             nn.ReLU()
         )
 
-        conv_2_length = (n_input_features - 1 + 1) + (n_input_features - 2 + 1)
         self.os_block_2 = nn.Sequential(
             nn.BatchNorm1d(conv_2_length),
             nn.ReLU
         )
 
+        self.os_block_3 = nn.Sequential(
+            nn.BatchNorm1d(conv_3_length),
+            nn.ReLU
+        )
+
+        self.os_block_4 = nn.Sequential(
+            nn.BatchNorm1d(conv_4_length),
+            nn.ReLU
+        )
+
+        self.os_block_5 = nn.Sequential(
+            nn.BatchNorm1d(conv_5_length),
+            nn.ReLU
+        )
+
+        self.os_block_6 = nn.Sequential(
+            nn.BatchNorm1d(conv_6_length),
+            nn.ReLU
+        )
+
         self.linear = nn.Sequential(
-            nn.Linear(observation_space['slice'].shape[0]*64, features_dim), 
+            nn.Linear(conv_6_length, features_dim), 
             nn.ReLU())
 
         extractors = {}
@@ -78,17 +130,16 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 obs_clone = torch.clone(observations['slice'])
 
                 # iterate through channels and implement OS block on all
-                n_channels = obs_clone.size(dim=2)
-                for  i in range (n_channels):
+                for i in range (self.n_input_channels):
                     x = [k(obs_clone[:, :, i]) for k in self.kernels_1]
-                    x = torch.cat(x, dim=1)
-                    x = self.os_block_1(x)
-                    x = [k(x) for k in self.kernels_1]
                     x = torch.cat(x, dim=1)
                     x = self.os_block_1(x)
                     x = [k(x) for k in self.kernels_2]
                     x = torch.cat(x, dim=1)
                     x = self.os_block_2(x)
+                    x = [k(x) for k in self.kernels_3]
+                    x = torch.cat(x, dim=1)
+                    x = self.os_block_3(x)
 
                     # os_out should have shape [batch, length]
                     if not os_out:
@@ -97,15 +148,15 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                         os_out = torch.cat((os_out, x), dim=1)
                 
             # Take concatenated output from previous os block and run it though a new os block
-            x = [k(os_out) for k in self.kernels_1]
+            x = [k(os_out) for k in self.kernels_4]
             x = torch.cat(x, dim=1)
-            x = self.os_block_1(x)
-            x = [k(x) for k in self.kernels_1]
+            x = self.os_block_4(x)
+            x = [k(x) for k in self.kernels_5]
             x = torch.cat(x, dim=1)
-            x = self.os_block_1(x)
-            x = [k(x) for k in self.kernels_2]
+            x = self.os_block_5(x)
+            x = [k(x) for k in self.kernels_6]
             x = torch.cat(x, dim=1)
-            x = self.os_block_2(x)
+            x = self.os_block_6(x)
 
             observations['slice'] = x
 
