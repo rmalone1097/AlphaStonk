@@ -24,7 +24,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_1_length = 0
 
         for p in prime_list:
-            if p >= self.n_input_features // 2:
+            if p <= self.n_input_features // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_1.append(conv)
                 conv_1_length += self.n_input_features - p + 1
@@ -33,12 +33,12 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_2_length = 0
 
         for p in prime_list:
-            if p >= conv_1_length // 2:
+            if p <= conv_1_length // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_2.append(conv)
                 conv_2_length += conv_1_length - p + 1
         
-        self.kernels_3 = nn.ModuleList(nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same'))
+        self.kernels_3 = nn.ModuleList([nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same')])
         conv_3_length = conv_2_length + conv_2_length - 1
 
         concat_1 = conv_3_length * self.n_input_channels
@@ -47,7 +47,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_4_length = 0
 
         for p in prime_list:
-            if p >= concat_1 // 2:
+            if p <= concat_1 // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_4.append(conv)
                 conv_4_length += concat_1 - p + 1
@@ -56,12 +56,12 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_5_length = 0
 
         for p in prime_list:
-            if p >= conv_4_length // 2:
+            if p <= conv_4_length // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_5.append(conv)
                 conv_5_length += conv_4_length - p + 1
         
-        self.kernels_6 = nn.ModuleList(nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same'))
+        self.kernels_6 = nn.ModuleList([nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same')])
         conv_6_length = conv_5_length + conv_5_length - 1
         
         # Not including convolutions
@@ -72,27 +72,27 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
 
         self.os_block_2 = nn.Sequential(
             nn.BatchNorm1d(conv_2_length),
-            nn.ReLU
+            nn.ReLU()
         )
 
         self.os_block_3 = nn.Sequential(
             nn.BatchNorm1d(conv_3_length),
-            nn.ReLU
+            nn.ReLU()
         )
 
         self.os_block_4 = nn.Sequential(
             nn.BatchNorm1d(conv_4_length),
-            nn.ReLU
+            nn.ReLU()
         )
 
         self.os_block_5 = nn.Sequential(
             nn.BatchNorm1d(conv_5_length),
-            nn.ReLU
+            nn.ReLU()
         )
 
         self.os_block_6 = nn.Sequential(
             nn.BatchNorm1d(conv_6_length),
-            nn.ReLU
+            nn.ReLU()
         )
 
         self.linear = nn.Sequential(

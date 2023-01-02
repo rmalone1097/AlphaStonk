@@ -9,10 +9,11 @@ import time
 import os
 
 from CNN_custom_policy import CustomCNN
-from custom_combined_extractor import CustomCombinedExtractor
+#from custom_combined_extractor import CustomCombinedExtractor
+from omni_scale_CNN import CustomCombinedExtractor
 
-pickle_dir = 'C:\\Users\\water\\documents\\datasets\\stock_data\\'
-df = pd.read_pickle(pickle_dir + 'SPY_minute_2012-08-22_built.pkl')
+pickle_dir = 'C:\\Users\\water\\desktop\\'
+df = pd.read_pickle(pickle_dir + 'SPY_minute_2012-08-22_built_gcp.pkl')
 trading_df = add_indicators(df)
 trading_df = trading_df.fillna(0)
 env = StockEnv(trading_df)
@@ -37,7 +38,7 @@ policy_kwargs = dict(
 
 #model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir)
 #model = PPO.load(cwd + '\\models\\PPOflat2epoch\\982800', env=env)
-model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=64, seed=4)
+model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=32, seed=4)
 
 class TensorboardCallback(BaseCallback):
     def __init__(self, verbose=0):
