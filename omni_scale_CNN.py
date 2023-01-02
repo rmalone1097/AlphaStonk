@@ -21,7 +21,6 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         n_input_channels = observation_space['slice'].shape[1]
 
         self.kernels_1 = nn.ModuleList()
-        self.kernels_2 = nn.ModuleList(nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same'))
         conv_1_length = 0
 
         for p in prime_list:
@@ -29,6 +28,8 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_1.append(conv)
                 conv_1_length += n_input_features - p + 1
+        
+        self.kernels_3 = nn.ModuleList(nn.Conv1d(1, 1, kernel_size=1, padding='same'), nn.Conv1d(1, 1, kernel_size=2, padding='same'))
         
         # Not including convolutions
         self.os_block_1 = nn.Sequential(
@@ -95,16 +96,18 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                     else:
                         os_out = torch.cat((os_out, x), dim=1)
                 
-                # Take concatenated output from previous os block and run it though a new os block
-                x = [k(os_out) for k in self.kernels_1]
-                x = torch.cat(x, dim=1)
-                x = self.os_block_1(x)
-                x = [k(x) for k in self.kernels_1]
-                x = torch.cat(x, dim=1)
-                x = self.os_block_1(x)
-                x = [k(x) for k in self.kernels_2]
-                x = torch.cat(x, dim=1)
-                x = self.os_block_2(x)
+            # Take concatenated output from previous os block and run it though a new os block
+            x = [k(os_out) for k in self.kernels_1]
+            x = torch.cat(x, dim=1)
+            x = self.os_block_1(x)
+            x = [k(x) for k in self.kernels_1]
+            x = torch.cat(x, dim=1)
+            x = self.os_block_1(x)
+            x = [k(x) for k in self.kernels_2]
+            x = torch.cat(x, dim=1)
+            x = self.os_block_2(x)
+
+            observations['slice'] = x
 
             encoded_tensor_list.append(extractor(observations[key]))
         # Return a (B, self._features_dim) PyTorch tensor, where B is batch dimension.
