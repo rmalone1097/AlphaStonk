@@ -22,8 +22,8 @@ env = StockEnv(trading_df)
 #check_env(env)
 
 cwd = os.getcwd()
-models_dir = 'C:\\Users\\water\\Documents\\Projects\\RL_stock_net\\models\\PPOflat' + str(time.time())
-logs_dir = 'C:\\Users\\water\\Documents\\Projects\\RL_stock_net\\logs\\PPOflat'+ str(time.time())
+models_dir = pickle_dir / Path('models\\PPOflat' + str(time.time()))
+logs_dir = pickle_dir / Path('logs\\PPOflat'+ str(time.time()))
 
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
