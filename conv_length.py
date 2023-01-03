@@ -4,7 +4,7 @@ with open('prime_numbers.txt') as f:
 prime_list = lines[0].split(",")
 prime_list = [int(n) for n in prime_list]
 
-n_input_features = 390
+n_input_features = 60
 conv_length_1 = 0
 conv_length_2 = 0
 conv_length_3 = 0
@@ -18,20 +18,20 @@ for p in prime_list:
         conv_length_1 += n_input_features - p + 1
 
 for p in prime_list:
-    if p <= conv_length_1 // 2:
+    if p <= n_input_features // 2:
         conv_length_2+= conv_length_1 - p + 1
 
 for n in [1, 2]:
     conv_length_3 += conv_length_2 - n + 1
 
-conv_length_4 = conv_length_3 * 25
+conv_length_4 = conv_length_3 * 7
 
 for p in prime_list:
     if p <= (conv_length_4) // 2:
         conv_length_5 += conv_length_4 - p + 1
 
 for p in prime_list:
-    if p <= conv_length_5 // 2:
+    if p <= conv_length_4 // 2:
         conv_length_6 += conv_length_5 - p + 1
 
 for n in [1, 2]:

@@ -20,11 +20,13 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         self.n_input_features = observation_space['slice'].shape[0]
         self.n_input_channels = observation_space['slice'].shape[1]
 
+        self.rf = 60
+
         self.kernels_1 = nn.ModuleList()
         conv_1_length = 0
 
         for p in prime_list:
-            if p <= self.n_input_features // 2:
+            if p <= self.rf // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_1.append(conv)
                 conv_1_length += self.n_input_features - p + 1
@@ -33,7 +35,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_2_length = 0
 
         for p in prime_list:
-            if p <= conv_1_length // 2:
+            if p <= self.rf // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_2.append(conv)
                 conv_2_length += conv_1_length - p + 1
@@ -56,7 +58,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_5_length = 0
 
         for p in prime_list:
-            if p <= conv_4_length // 2:
+            if p <= concat_1 // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_5.append(conv)
                 conv_5_length += conv_4_length - p + 1
