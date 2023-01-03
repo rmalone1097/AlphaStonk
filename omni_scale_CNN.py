@@ -49,7 +49,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_4_length = 0
 
         for p in prime_list:
-            if p <= concat_1 // 2:
+            if p <= self.rf // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_4.append(conv)
                 conv_4_length += concat_1 - p + 1
@@ -58,7 +58,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         conv_5_length = 0
 
         for p in prime_list:
-            if p <= concat_1 // 2:
+            if p <= self.rf // 2:
                 conv = nn.Conv1d(1, 1, kernel_size=p, padding='same')
                 self.kernels_5.append(conv)
                 conv_5_length += conv_4_length - p + 1

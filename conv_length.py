@@ -27,11 +27,11 @@ for n in [1, 2]:
 conv_length_4 = conv_length_3 * 7
 
 for p in prime_list:
-    if p <= (conv_length_4) // 2:
+    if p <= n_input_features // 2:
         conv_length_5 += conv_length_4 - p + 1
 
 for p in prime_list:
-    if p <= conv_length_4 // 2:
+    if p <= n_input_features // 2:
         conv_length_6 += conv_length_5 - p + 1
 
 for n in [1, 2]:
