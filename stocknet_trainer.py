@@ -13,7 +13,8 @@ from CNN_custom_policy import CustomCNN
 #from custom_combined_extractor import CustomCombinedExtractor
 from omni_scale_CNN import CustomCombinedExtractor
 
-pickle_dir = Path.home()
+#pickle_dir = Path.home()
+pickle_dir = Path('C:/users/water/desktop')
 df = pd.read_pickle(pickle_dir / 'SPY_minute_2012-08-22_built_gcp.pkl')
 trading_df = add_indicators(df)
 trading_df = trading_df.fillna(0)
