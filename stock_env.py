@@ -120,7 +120,7 @@ class StockEnv(Env):
         # Total holding time used for average holding time calculation
         self.total_holding_time = 0
         # Defined as the point at which a trade with a positive position value will yield 0 reward due to decay
-        self.decay_factor = 1000
+        self.decay_factor = 390
         # Track ROI
         self.roi = 0
         # Total ROI to compute average
