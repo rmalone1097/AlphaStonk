@@ -236,8 +236,9 @@ class StockEnv(Env):
             elif position_value == 0:
                 self.reward = 0
 
-            self.holding_time += 1
-            self.total_holding_time += 1
+            if action != 0:
+                self.holding_time += 1
+                self.total_holding_time += 1
         
         self.win_ratio = self.wins / (self.wins + self.losses)
         self.long_ratio = self.longs / (self.longs + self.shorts)
