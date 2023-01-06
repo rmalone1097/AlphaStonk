@@ -61,8 +61,8 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float32),
-            'vector': Box(low=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 
-                high=np.array([2, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf]), dtype=np.float32)
+            'vector': Box(low=np.zeros(27, dtype=np.float32), 
+                high=np.concatenate([2], np.full(26, np.inf, dtype=np.float32)))
         })
         self.df = df
         # Every transcation to have this value ($)
@@ -293,7 +293,7 @@ class StockEnv(Env):
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = {'slice': df_slice.loc[:, 'open':].to_numpy(), 'vector': np.array([0, 0], dtype=np.float32)}
+        self.state = {'slice': df_slice.loc[:, 'open':].to_numpy(), 'vector': np.zeros(27, dtype=np.float32)}
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
