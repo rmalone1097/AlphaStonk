@@ -130,7 +130,7 @@ class StockEnv(Env):
         # Average ROI
         self.average_roi = 0
         # Minimum ROI for positive reward (percentage)
-        self.minimum_roi = 0.2
+        self.minimum_roi = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
