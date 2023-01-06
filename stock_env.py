@@ -62,7 +62,7 @@ class StockEnv(Env):
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float32),
             'vector': Box(low=np.zeros(27, dtype=np.float32), 
-                high=np.concatenate([2], np.full(26, np.inf, dtype=np.float32)))
+                high=np.concatenate((np.array([2], dtype=np.float32), np.full(26, np.inf, dtype=np.float32))))
         })
         self.df = df
         # Every transcation to have this value ($)
@@ -240,11 +240,12 @@ class StockEnv(Env):
                 self.holding_time += 1
                 self.total_holding_time += 1
         
-        self.win_ratio = self.wins / (self.wins + self.losses)
-        self.long_ratio = self.longs / (self.longs + self.shorts)
-        self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
-        self.average_roi = self.total_roi / self.num_positions
-        self.average_holding_time = self.total_holding_time / self.num_positions
+        if self.num_positions != 0:
+            self.win_ratio = self.wins / (self.wins + self.losses)
+            self.long_ratio = self.longs / (self.longs + self.shorts)
+            self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
+            self.average_roi = self.total_roi / self.num_positions
+            self.average_holding_time = self.total_holding_time / self.num_positions
         self.position_log = action
         info = {}
         self.action = action
@@ -252,7 +253,7 @@ class StockEnv(Env):
 
         self.state['vector'] = np.array([action, self.holding_time])
         last_dp = self.state['slice'][-1, :]
-        self.state['vector'] = np.concatenate(self.state['vector'], last_dp, axis=0)
+        self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
 
         return self.state, self.reward, done, info
 
