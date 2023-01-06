@@ -61,8 +61,8 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float32),
-            'vector': Box(low=np.zeros(27, dtype=np.float32), 
-                high=np.concatenate((np.array([2], dtype=np.float32), np.full(26, np.inf, dtype=np.float32))))
+            'vector': Box(low=np.zeros(28, dtype=np.float32), 
+                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(26, np.inf, dtype=np.float32))))
         })
         self.df = df
         # Every transcation to have this value ($)
@@ -104,7 +104,7 @@ class StockEnv(Env):
         # Current price
         self.current_price = 0
         # Minimum time (in minutes) a position must be held
-        self.minimum_holding_time = 1
+        self.minimum_holding_time = 0
         # Holding time for a position
         self.holding_time = 0
         # Action log
@@ -113,8 +113,6 @@ class StockEnv(Env):
         self.pl_dict = {}
         # Positive if winning streak, negative if losing streak
         self.streak = 0
-        # Hold time of position
-        self.holding_time = 0
         # Average holding time
         self.average_holding_time = 0
         # Total holding time used for average holding time calculation
@@ -171,6 +169,14 @@ class StockEnv(Env):
             position_value = (self.start_price - self.current_price) / self.start_price * 100
         else:
             position_value = 0
+        
+        # Posiiton is held. Grant reward based on reward function and position value
+        if position_value < 0:
+            self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2 - self.minimum_roi
+        elif position_value > 0:
+            self.reward = position_value - (position_value * self.holding_time) / self.decay_factor - self.minimum_roi
+        elif position_value == 0:
+            self.reward = 0
 
         # Close old position and open new one
         if self.position_log != action:
@@ -227,18 +233,13 @@ class StockEnv(Env):
             self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
             '''
 
-        # Posiiton is held. Grant reward based on reward function and position value
-        else:
-            if position_value < 0:
-                self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2 - self.minimum_roi
-            elif position_value > 0:
-                self.reward = position_value - (position_value * self.holding_time) / self.decay_factor - self.minimum_roi
-            elif position_value == 0:
-                self.reward = 0
-
-            if action != 0:
-                self.holding_time += 1
-                self.total_holding_time += 1
+        if action != 0:
+            self.holding_time += 1
+            self.total_holding_time += 1
+        
+        self.state['vector'] = np.array([action, self.position_log, self.holding_time])
+        last_dp = self.state['slice'][-1, :]
+        self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
         
         if self.num_positions != 0:
             self.win_ratio = self.wins / (self.wins + self.losses)
@@ -250,10 +251,6 @@ class StockEnv(Env):
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
-
-        self.state['vector'] = np.array([action, self.holding_time])
-        last_dp = self.state['slice'][-1, :]
-        self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
 
         return self.state, self.reward, done, info
 
@@ -295,7 +292,7 @@ class StockEnv(Env):
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = {'slice': df_slice.loc[:, 'open':].to_numpy(), 'vector': np.zeros(27, dtype=np.float32)}
+        self.state = {'slice': df_slice.loc[:, 'open':].to_numpy(), 'vector': np.zeros(28, dtype=np.float32)}
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
