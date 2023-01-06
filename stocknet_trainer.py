@@ -55,7 +55,6 @@ class TensorboardCallback(BaseCallback):
     def _on_step(self) -> bool:
         self.cum_rew_1 += self.training_env.get_attr("reward")[0]
         net_worth = self.training_env.get_attr('net_worth')[0]
-        self.logger.record('variables/net_worth', net_worth)
         self.logger.record('variables/action', self.training_env.get_attr('action')[0])
         self.logger.record('variables/current_price', self.training_env.get_attr('current_price')[0])
         #self.logger.record('variables/wins', self.training_env.get_attr('wins')[0])
@@ -68,6 +67,7 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/total_roi', self.training_env.get_attr('total_roi')[0])
         self.logger.record('variables/average_roi', self.training_env.get_attr('average_roi')[0])
         self.logger.record('variables/zero_ratio', self.training_env.get_attr('zero_ratio')[0])
+        self.logger.record('variables/average_holding_time', self.training_env.get_attr('average_holding_time')[0])
         #self.logger.record('reward', reward)
         return True
 

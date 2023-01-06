@@ -114,6 +114,10 @@ class StockEnv(Env):
         self.streak = 0
         # Hold time of position
         self.holding_time = 0
+        # Average holding time
+        self.average_holding_time = 0
+        # Total holding time used for average holding time calculation
+        self.total_holding_time = 0
         # Defined as the point at which a trade with a positive position value will yield 0 reward due to decay
         self.decay_factor = 1000
         # Track ROI
@@ -141,6 +145,7 @@ class StockEnv(Env):
             self.total_roi = 0
             self.num_positions = 0
             self.position_log = 0
+            self.total_holding_time = 0
             action = 0
             done = True
         else:
@@ -231,12 +236,13 @@ class StockEnv(Env):
                 self.reward = 0
 
             self.holding_time += 1
-
-        if self.num_positions != 0:
-            self.win_ratio = self.wins / (self.wins + self.losses)
-            self.long_ratio = self.longs / (self.longs + self.shorts)
-            self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
-            self.average_roi = self.total_roi / self.num_positions
+            self.total_holding_time += 1
+        
+        self.win_ratio = self.wins / (self.wins + self.losses)
+        self.long_ratio = self.longs / (self.longs + self.shorts)
+        self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
+        self.average_roi = self.total_roi / self.num_positions
+        self.average_holding_time = self.total_holding_time / self.num_positions
         self.position_log = action
         info = {}
         self.action = action
