@@ -61,7 +61,8 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float32),
-            'vector': Box(low=np.array([0, 0]), high=np.array([2, np.inf]), dtype=np.float32)
+            'vector': Box(low=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 
+                high=np.array([2, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf]), dtype=np.float32)
         })
         self.df = df
         # Every transcation to have this value ($)
@@ -249,6 +250,8 @@ class StockEnv(Env):
         self.state_idx = [first_idx, last_idx]
 
         self.state['vector'] = np.array([action, self.holding_time])
+        last_dp = self.state['slice'][-1, :]
+        self.state['vector'] = np.concatenate(self.state['vector'], last_dp, axis=0)
 
         return self.state, self.reward, done, info
 
