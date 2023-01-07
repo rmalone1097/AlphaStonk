@@ -201,12 +201,6 @@ class StockEnv(Env):
                 self.streak -= 1
             else:
                 self.streak = 0
-
-            '''if self.position_log == 1 and self.reward < 0:
-                self.reward = self.reward * 1.5
-
-            if self.position_log == 2 and self.reward < 0:
-                self.reward = self.reward * 1.5'''
             
             # Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
@@ -224,14 +218,6 @@ class StockEnv(Env):
             # Start price of new position is the current price
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
-
-            '''
-        # If holding no position, slight penalty equal to 1% loss per day DEPRICATED
-        elif self.position_log == 0:
-            percentage_multiplier = 0.01
-            steps_in_trading_day = 390
-            self.reward = -self.transaction_value * percentage_multiplier / steps_in_trading_day
-            '''
 
         if action != 0:
             self.holding_time += 1
