@@ -191,7 +191,7 @@ class StockEnv(Env):
             # Agent closed position so position value is final. Can be used to tally win/loss
             if position_value > 0:
                 self.wins += 1
-            else:
+            elif position_value < 0:
                 self.losses += 1
             
             # Maintains streak, which is logged but currently unused
