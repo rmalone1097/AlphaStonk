@@ -3,15 +3,15 @@ from stable_baselines3.common.logger import CSVOutputFormat
 from stable_baselines3.common.logger import configure
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
-from data_utils import *
+from utils.data_utils import *
 from stock_env import StockEnv
 import time
 import os
 from pathlib import Path
 
-from CNN_custom_policy import CustomCNN
-#from custom_combined_extractor import CustomCombinedExtractor
-from omni_scale_CNN import CustomCombinedExtractor
+from policies.CNN_custom_policy import CustomCNN
+#from policies.custom_combined_extractor import CustomCombinedExtractor
+from policies.omni_scale_CNN import CustomCombinedExtractor
 
 #pickle_dir = Path.home()
 pickle_dir = Path('C:/users/water/desktop')

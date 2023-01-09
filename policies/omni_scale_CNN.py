@@ -2,12 +2,12 @@ import gym
 import torch
 import torch.nn as nn
 
-from wensi import *
+from policies.wensi import *
 from stable_baselines3 import PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 # List of prime numbers as int
-with open('prime_numbers.txt') as f:
+with open(r'utils//prime_numbers.txt') as f:
     lines = f.readlines()
 prime_list = lines[0].split(",")
 prime_list = [int(n) for n in prime_list]

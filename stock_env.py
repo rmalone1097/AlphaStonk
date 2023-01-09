@@ -6,7 +6,7 @@ import datetime
 import torch
 import numpy as np
 import pandas as pd
-from data_utils import *
+from utils.data_utils import *
 
 class StockEnv(Env):
     def __init__(self, df):
