@@ -228,7 +228,7 @@ class StockEnv(Env):
         self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
         
         if self.num_positions != 0:
-            self.win_ratio = self.wins / (self.wins + self.losses)
+            self.win_ratio = self.wins / (self.num_positions)
             self.long_ratio = self.longs / (self.longs + self.shorts)
             self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
             self.average_roi = self.total_roi / self.num_positions

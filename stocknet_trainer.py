@@ -76,6 +76,7 @@ class TensorboardCallback(BaseCallback):
 #csv_logger = configure(folder = '.', format_strings=["stdout", "csv", "tensorboard"])
 #model.set_logger(csv_logger)
 
-TIMESTEPS = 10000000
-model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f'PPOflat', callback=TensorboardCallback())
-model.save(models_dir + '\\' + str(TIMESTEPS))
+TIMESTEPS = 100000
+for i in range(1, 1000):
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f'PPOflat', callback=TensorboardCallback())
+    model.save(models_dir + '\\' + str(time.time()))
