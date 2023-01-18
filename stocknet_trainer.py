@@ -43,6 +43,8 @@ policy_kwargs = dict(
 #model = PPO.load(cwd + '\\models\\PPOflat2epoch\\982800', env=env)
 model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=32, seed=4)
 
+print(model.policy)
+
 class TensorboardCallback(BaseCallback):
     def __init__(self, verbose=0):
         super(TensorboardCallback, self).__init__(verbose)
