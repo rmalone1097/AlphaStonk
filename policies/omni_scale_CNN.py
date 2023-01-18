@@ -32,7 +32,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 input_shape = self.n_input_features
                 n_class = features_dim
                 start_kernel_size = 1
-                max_kernel_size = 389
+                max_kernel_size = 89
                 quarter_or_half = 4
                 parameter_number_of_layer_list = [8*128, 5*128*256 + 2*256*128]
                 receptive_field_shape= min(int(input_shape/quarter_or_half),max_kernel_size)
@@ -41,12 +41,16 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 model = OS_CNN(layer_parameter_list, n_class, self.n_input_channels, True)
                 extractors[key] = model
                 total_concat_size += features_dim
+
+                print('Slice shape: ', subspace.shape)
             elif key == "vector":
                 # Run through a simple MLP
                 #TODO: More than one linear layer?
                 hidden_nodes = subspace.shape[0]
                 extractors[key] = nn.Linear(subspace.shape[0], hidden_nodes)
                 total_concat_size += hidden_nodes
+
+                print('Vector shape: ', subspace.shape)
 
         self.extractors = nn.ModuleDict(extractors)
 
