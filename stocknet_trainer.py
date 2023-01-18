@@ -71,6 +71,8 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('variables/average_roi', self.training_env.get_attr('average_roi')[0])
         self.logger.record('variables/zero_ratio', self.training_env.get_attr('zero_ratio')[0])
         self.logger.record('variables/average_holding_time', self.training_env.get_attr('average_holding_time')[0])
+        self.logger.record('variables/average_long_roi', self.training_env.get_attr('average_long_roi')[0])
+        self.logger.record('variables/average_short_roi', self.training_env.get_attr('average_short_roi')[0])
         #self.logger.record('reward', reward)
         return True
 

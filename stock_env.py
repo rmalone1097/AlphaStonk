@@ -133,9 +133,13 @@ class StockEnv(Env):
         self.long_candles = 0
         # Number of minutes of short positions used to calculate zero ratio
         self.short_candles = 0
+        # Cumulative ROI for long positions
         self.long_roi = 0
+        # Cumulative ROI for short positions
         self.short_roi = 0
+        # Average ROI for long positions
         self.average_long_roi = 0
+        # Average ROI for short positions
         self.average_short_roi = 0
 
     def step(self, action):
