@@ -128,7 +128,15 @@ class StockEnv(Env):
         # Average ROI
         self.average_roi = 0
         # Minimum ROI for positive reward (percentage)
-        self.minimum_roi = 0
+        self.minimum_roi = 0.05
+        # Number of minutes of long positions used to calculate zero ratio
+        self.long_candles = 0
+        # Number of minutes of short positions used to calculate zero ratio
+        self.short_candles = 0
+        self.long_roi = 0
+        self.short_roi = 0
+        self.average_long_roi = 0
+        self.average_short_roi = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -141,6 +149,10 @@ class StockEnv(Env):
             self.losses = 0
             self.longs = 0
             self.shorts = 0
+            self.long_candles = 0
+            self.short_candles = 0
+            self.long_roi = 0
+            self.short_roi = 0
             self.total_roi = 0
             self.num_positions = 0
             self.position_log = 0
@@ -188,6 +200,11 @@ class StockEnv(Env):
             self.roi = position_value
             self.total_roi += self.roi
 
+            if self.position_log == 1:
+                self.long_roi += self.roi
+            elif self.position_log == 2:
+                self.short_roi += self.roi
+
             # Agent closed position so position value is final. Can be used to tally win/loss
             if position_value > 0:
                 self.wins += 1
@@ -218,6 +235,14 @@ class StockEnv(Env):
             # Start price of new position is the current price
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
+        
+        # Count longs and shorts
+        if action == 1:
+            self.long_candles += 1
+        elif action == 2:
+            self.short_candles += 1
+        elif action == 0:
+            self.zeros += 1
 
         if action != 0:
             self.holding_time += 1
@@ -227,12 +252,16 @@ class StockEnv(Env):
         last_dp = self.state['slice'][-1, :]
         self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
         
-        if self.num_positions != 0:
+        #TODO: Get rid of this ugly condition
+        if self.num_positions != 0 and self.longs != 0 and self.shorts != 0:
             self.win_ratio = self.wins / (self.num_positions)
             self.long_ratio = self.longs / (self.longs + self.shorts)
-            self.zero_ratio = self.zeros / (self.longs + self.shorts + self.zeros)
+            self.zero_ratio = self.zeros / (self.long_candles + self.short_candles + self.zeros)
             self.average_roi = self.total_roi / self.num_positions
             self.average_holding_time = self.total_holding_time / self.num_positions
+            self.average_long_roi = self.long_roi / self.longs
+            self.average_short_toi = self.short_roi / self.shorts
+
         self.position_log = action
         info = {}
         self.action = action
