@@ -19,6 +19,7 @@ def get_Prime_number_in_a_range(start, end):
 
 
 def get_out_channel_number(paramenter_layer, in_channel, prime_list):
+    #print(in_channel, prime_list)
     out_channel_expect = int(paramenter_layer/(in_channel*sum(prime_list)))
     return out_channel_expect
 
@@ -163,7 +164,7 @@ def check_channel_limit(os_block_layer_parameter_list,n_input_channel,mid_channe
 
     
 class OS_CNN(nn.Module):
-    def __init__(self, layer_parameter_list, n_class, n_input_channel,squeeze_layer = True):
+    def __init__(self, parameter_number_of_layer_list, layer_parameter_list, n_class, n_input_channel,squeeze_layer = True):
         super(OS_CNN, self).__init__()
         
         self.mid_channel_limit = 1000
@@ -182,7 +183,7 @@ class OS_CNN(nn.Module):
         in_channel_we_want= len(layer_parameter_list[1])*os_block_layer_parameter_list[-1][-1][1]*n_input_channel
         print('in_channel_we_want is :', in_channel_we_want)
        
-        layer_parameter_list = generate_layer_parameter_list(1,rf_size+1,[8*128, (5*128*256 + 2*256*128)/2],in_channel = in_channel_we_want)
+        layer_parameter_list = generate_layer_parameter_list(1, rf_size+1, [parameter_number_of_layer_list[0], parameter_number_of_layer_list[1] / 2], in_channel = in_channel_we_want)
         
         self.averagepool = nn.AdaptiveAvgPool1d(1) 
         print(layer_parameter_list)

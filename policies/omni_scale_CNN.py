@@ -32,13 +32,13 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 input_shape = self.n_input_features
                 n_class = features_dim
                 start_kernel_size = 1
-                max_kernel_size = 89
+                max_kernel_size = 97
                 quarter_or_half = 4
-                parameter_number_of_layer_list = [8*128, 5*128*256 + 2*256*128]
+                parameter_number_of_layer_list = [9*128, 6*128*256 + 3*256*128]
                 receptive_field_shape= min(int(input_shape/quarter_or_half),max_kernel_size)
                 layer_parameter_list = generate_layer_parameter_list(start_kernel_size,receptive_field_shape,parameter_number_of_layer_list,in_channel = 1)
 
-                model = OS_CNN(layer_parameter_list, n_class, self.n_input_channels, True)
+                model = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, n_class, self.n_input_channels, True)
                 extractors[key] = model
                 total_concat_size += features_dim
 
