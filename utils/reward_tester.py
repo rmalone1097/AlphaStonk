@@ -4,9 +4,8 @@ import mpmath
 # The higher the decay factor, the less aggressively time is penalized. Decay factor = time at which a positive net trade will generate a negative reward.
 
 class RewardModel():
-    def __init__(self, times_list:list, net_list:list) -> None:
-        self.times_list = times_list
-        self.net_list = net_list
+    def __init__(self, price_list:list) -> None:
+        self.price_list = price_list
         self.reward_lists = []
 
     def decayOne(self, decay_factor, minimum_roi):
