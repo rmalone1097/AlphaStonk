@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import mpmath
 
 # The higher the decay factor, the less aggressively time is penalized. Decay factor = time at which a positive net trade will generate a negative reward.
 
@@ -15,10 +16,11 @@ class RewardModel():
                 if net < 0:
                     reward = (-net - (-net * time) / decay_factor) + net*2 - minimum_roi
                 else:
-                    reward = net - (net * time) / decay_factor - minimum_roi
+                    reward = -net * (mpmath.acot(time - decay_factor) - mpmath.pi / 2)
                 reward_list.append(reward)
 
             self.reward_lists.append(reward_list)
+        print(self.reward_lists)
     
     def plotRewards(self):
         fig, ax = plt.subplots()
