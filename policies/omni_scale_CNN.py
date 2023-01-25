@@ -32,9 +32,10 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
                 input_shape = self.n_input_features
                 n_class = features_dim
                 start_kernel_size = 1
-                max_kernel_size = 389
+                max_kernel_size = 197
                 quarter_or_half = 4
-                parameter_number_of_layer_list = [106*128,103*128*256 + 3*256*128]
+                parameter_starter = 37
+                parameter_number_of_layer_list = [parameter_starter*128,parameter_starter*128*256]
                 receptive_field_shape= min(int(input_shape/quarter_or_half),max_kernel_size)
                 layer_parameter_list = generate_layer_parameter_list(start_kernel_size,receptive_field_shape,parameter_number_of_layer_list,in_channel = 1)
 

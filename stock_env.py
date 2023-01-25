@@ -41,13 +41,6 @@ class StockEnv(Env):
         | 15  | ema_250                              | 0    | Inf | dollars ($)  |
         | 16  | ema_360                              | 0    | Inf | dollars ($)  |
         | 17  | ema_445                              | 0    | Inf | dollars ($)  |
-        | 18  | ema_900                              | 0    | Inf | dollars ($)  |
-        | 19  | ema_1000                             | 0    | Inf | dollars ($)  |
-        | 20  | ema_5_day                            | 0    | Inf | dollars ($)  |
-        | 21  | ema_10_day                           | 0    | Inf | dollars ($)  |
-        | 22  | ema_20_day                           | 0    | Inf | dollars ($)  |
-        | 23  | ema_50_day                           | 0    | Inf | dollars ($)  |
-        | 24  | ema_100_day                          | 0    | Inf | dollars ($)  |
         
         Vector is a 'ndarray' with shape '(2,)' where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
@@ -60,9 +53,9 @@ class StockEnv(Env):
         self.window_days = 5
         # Observation dictionary
         self.observation_space = Dict({
-            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,25), dtype=np.float32),
-            'vector': Box(low=np.zeros(28, dtype=np.float32), 
-                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(26, np.inf, dtype=np.float32))))
+            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,18), dtype=np.float32),
+            'vector': Box(low=np.zeros(21, dtype=np.float32), 
+                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(19, np.inf, dtype=np.float32))))
         })
         self.df = df
         # Every transcation to have this value ($)
@@ -175,7 +168,7 @@ class StockEnv(Env):
                     break
 
         df_slice = self.df.iloc[first_idx:last_idx]
-        self.state['slice'] = df_slice.loc[:, 'open':].to_numpy()
+        self.state['slice'] = df_slice.loc[:, 'open':'ema_445'].to_numpy()
         self.current_price = df_slice.iloc[-1]['close']
 
         # Worth of position, calculated as percentage change
@@ -311,7 +304,7 @@ class StockEnv(Env):
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = {'slice': df_slice.loc[:, 'open':].to_numpy(), 'vector': np.zeros(28, dtype=np.float32)}
+        self.state = {'slice': df_slice.loc[:, 'open':'ema_445'].to_numpy(), 'vector': np.zeros(21, dtype=np.float32)}
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
