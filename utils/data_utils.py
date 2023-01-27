@@ -199,6 +199,13 @@ def plot_df_slice(df, starting_index=0, ending_index=30):
         mpf.make_addplot(df['ema_100_day'].iloc[starting_index:ending_index], panel=0)]
     mpf.plot(df.iloc[starting_index:ending_index], type='candle', addplot=taplots)
 
+def plot_energy_cloud(df, starting_index=0, ending_index=30):
+    taplots = []
+    taplots += [
+        mpf.make_addplot(df['ema_25'].iloc[starting_index:ending_index], panel=0),
+        mpf.make_addplot(df['ema_170'].iloc[starting_index:ending_index], panel=0)]
+    mpf.plot(df.iloc[starting_index:ending_index], type='candle', addplot=taplots)
+
 #fetch_all_data('SPY', 1, '2012-08-22', '2022-08-22')
 #file_path = write_data_to_new_file('AAPL', 1, '2022-05-19', '2022-05-20')
 '''df = df_builder('SPY_minute_2012-08-22.csv')
