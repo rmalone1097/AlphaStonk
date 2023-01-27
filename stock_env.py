@@ -55,7 +55,7 @@ class StockEnv(Env):
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,18), dtype=np.float32),
             'vector': Box(low=np.zeros(21, dtype=np.float32), 
-                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(19, np.inf, dtype=np.float32))))
+                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
         })
         self.df = df
         # Every transcation to have this value ($)
@@ -134,6 +134,8 @@ class StockEnv(Env):
         self.average_long_roi = 0
         # Average ROI for short positions
         self.average_short_roi = 0
+        # Energy (5-15 EMA cloud difference) used for reward
+        self.energy = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -179,13 +181,8 @@ class StockEnv(Env):
         else:
             position_value = 0
         
-        # Posiiton is held. Grant reward based on reward function and position value
-        if position_value < 0:
-            self.reward = (-position_value - (-position_value * self.holding_time) / self.decay_factor) + position_value*2 - self.minimum_roi
-        elif position_value > 0:
-            self.reward = position_value - (position_value * self.holding_time) / self.decay_factor - self.minimum_roi
-        elif position_value == 0:
-            self.reward = 0
+        # Energy, defined as difference between EMA_5 and EMA_15
+        self.energy = 
 
         # Close old position and open new one
         if self.position_log != action:
@@ -245,7 +242,7 @@ class StockEnv(Env):
             self.holding_time += 1
             self.total_holding_time += 1
         
-        self.state['vector'] = np.array([action, self.position_log, self.holding_time])
+        self.state['vector'] = np.array([action, self.position_log, self.holding_time, self.energy])
         last_dp = self.state['slice'][-1, :]
         self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
         
@@ -304,7 +301,7 @@ class StockEnv(Env):
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = {'slice': df_slice.loc[:, 'open':'ema_445'].to_numpy(), 'vector': np.zeros(21, dtype=np.float32)}
+        self.state = {'slice': df_slice.loc[:, 'open':'ema_445'].to_numpy(), 'vector': np.zeros(22, dtype=np.float32)}
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
