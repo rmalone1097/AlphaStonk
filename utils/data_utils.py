@@ -209,15 +209,19 @@ def plot_energy_cloud(df, starting_index=0, ending_index=30):
 
     for i, row in tqdm(enumerate(df_slice.itertuples(index=False)), total=len(df)):
         if i != 0:
-            #reward = (row.ema_25 - df_slice['ema_25'].iloc[i-1]) / 2
             energy = (row.ema_25 - row.ema_170) / row.ema_170 * 100
-            reward = energy + ((row.close - row.ema_25) / row.ema_25 * 250)
+            if row.daily_candle_counter > 120 or row.daily_candle_counter == 1:
+                reward = energy + ((row.close - row.ema_25) / row.ema_25 * 250)
+            else:
+                reward = (row.close - row.ema_25) / row.ema_25 * 250
+
             energies.append(energy)
             long_rewards.append(reward)
             short_rewards.append(-reward)
+
             if abs(reward) <= 0.27:
                 zero_rewards.append(0.27)
-            elif abs(reward) >= 0.5 and row.daily_candle_counter >= 15:
+            elif abs(reward) >= 0.5 and row.daily_candle_counter > 15:
                 zero_rewards.append(-abs(reward))
             else:
                 zero_rewards.append(0)
