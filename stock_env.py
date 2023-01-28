@@ -181,8 +181,31 @@ class StockEnv(Env):
         else:
             position_value = 0
         
-        # Energy, defined as difference between EMA_5 and EMA_15
-        self.energy = 
+        # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
+        latest_close = self.state['slice'][-1, 3]
+        latest_daily_candle = self.state['slice'][-1, 7]
+        latest_ema_25 = self.state['slice'][-1, 11]
+        latest_ema_170 = self.state['slice'][-1, 14]
+        self.energy = (latest_ema_25 - latest_ema_170) / latest_ema_170 * 100
+
+        # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
+        if latest_daily_candle > 120 or latest_daily_candle == 1:
+            reward = self.energy + ((latest_close - latest_ema_25) / latest_ema_25 * 250)
+        else:
+            reward = (latest_close - latest_ema_25) / latest_ema_25 * 250
+        
+        # Reward setting
+        if self.position_log == 1:
+            self.reward = reward
+        elif self.position_log == 2:
+            self.reard = -reward
+        elif self.position_log == 0:
+            if abs(reward) <= 0.27:
+                self.reward = 0.27
+            elif abs(reward) >= 0.5 and row.daily_candle_counter > 15:
+                self.reward = -abs(reward)
+            else:
+                self.reward = 0
 
         # Close old position and open new one
         if self.position_log != action:
@@ -213,18 +236,16 @@ class StockEnv(Env):
             else:
                 self.streak = 0
             
-            # Skip amount of canldes specified by timestep once a position is taken
+            '''# Skip amount of canldes specified by timestep once a position is taken
             if action != 0:
                 first_idx += self.minimum_holding_time
-                last_idx += self.minimum_holding_time
+                last_idx += self.minimum_holding_time'''
             
             # Count longs and shorts
             if action == 1:
                 self.longs += 1
             elif action == 2:
                 self.shorts += 1
-            elif action == 0:
-                self.zeros += 1
 
             # Start price of new position is the current price
             self.start_price = self.current_price

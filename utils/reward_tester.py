@@ -11,6 +11,6 @@ trading_df = trading_df.fillna(0)
 
 #plot_energy_cloud(trading_df, starting_index=1950, ending_index=2400)
 difference = 1560
-starting_index = 300000
+starting_index = 600000
 ending_index =starting_index + difference
 plot_energy_cloud(trading_df, starting_index=starting_index, ending_index=ending_index)
