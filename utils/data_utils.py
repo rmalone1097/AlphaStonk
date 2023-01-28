@@ -201,9 +201,39 @@ def plot_df_slice(df, starting_index=0, ending_index=30):
 
 def plot_energy_cloud(df, starting_index=0, ending_index=30):
     taplots = []
+    long_rewards = [0]
+    short_rewards = [0]
+    zero_rewards = [0]
+    energies = [0]
+    df_slice = df.iloc[starting_index:ending_index]
+
+    for i, row in tqdm(enumerate(df_slice.itertuples(index=False)), total=len(df)):
+        if i != 0:
+            #reward = (row.ema_25 - df_slice['ema_25'].iloc[i-1]) / 2
+            energy = (row.ema_25 - row.ema_170) / row.ema_170 * 100
+            reward = energy + ((row.close - row.ema_25) / row.ema_25 * 250)
+            energies.append(energy)
+            long_rewards.append(reward)
+            short_rewards.append(-reward)
+            if abs(reward) <= 0.27:
+                zero_rewards.append(0.27)
+            elif abs(reward) >= 0.5 and row.daily_candle_counter >= 15:
+                zero_rewards.append(-abs(reward))
+            else:
+                zero_rewards.append(0)
+
+    df_slice['long_reward'] = long_rewards
+    df_slice['short_reward'] = short_rewards
+    df_slice['zero_reward'] = zero_rewards
+    df_slice['energy'] = energies
+
     taplots += [
-        mpf.make_addplot(df['ema_25'].iloc[starting_index:ending_index], panel=0),
-        mpf.make_addplot(df['ema_170'].iloc[starting_index:ending_index], panel=0)]
+        mpf.make_addplot(df_slice['ema_25'], panel=0),
+        mpf.make_addplot(df_slice['ema_170'], panel=0),
+        mpf.make_addplot(df_slice['long_reward'], panel=1, color='green', ylabel='Rewards'),
+        mpf.make_addplot(df_slice['short_reward'], panel=1, color='red'),
+        mpf.make_addplot(df_slice['zero_reward'], panel=2, ylabel='Zero Reward'),
+        mpf.make_addplot(df_slice['energy'], panel=3, color='orange', ylabel='Energy')]
     mpf.plot(df.iloc[starting_index:ending_index], type='candle', addplot=taplots)
 
 #fetch_all_data('SPY', 1, '2012-08-22', '2022-08-22')
