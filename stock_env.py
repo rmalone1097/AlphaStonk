@@ -58,8 +58,6 @@ class StockEnv(Env):
                 high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
         })
         self.df = df
-        # Every transcation to have this value ($)
-        self.transaction_value = 1000
         # Net worth to track cumulative reward
         self.net_worth = 0
         # Variable to keep track of initial underlying at start of position
@@ -70,8 +68,6 @@ class StockEnv(Env):
         self.state_idx = []
         # Variable to keep track of position between steps
         self.position_log = 0
-        # Log to keep track of trades
-        self.trade_log = []
         # Timestep length to update action
         self.timestep = 1
         # Logged value representing amount of long positions
@@ -100,18 +96,12 @@ class StockEnv(Env):
         self.minimum_holding_time = 0
         # Holding time for a position
         self.holding_time = 0
-        # Action log
-        self.action_log = 0
-        # Dictionary of open-close price and PL (unused)
-        self.pl_dict = {}
         # Positive if winning streak, negative if losing streak
         self.streak = 0
         # Average holding time
         self.average_holding_time = 0
         # Total holding time used for average holding time calculation
         self.total_holding_time = 0
-        # Defined as the point at which a trade with a positive position value will yield 0 reward due to decay
-        self.decay_factor = 390
         # Track ROI
         self.roi = 0
         # Total ROI to compute average
@@ -120,8 +110,6 @@ class StockEnv(Env):
         self.num_positions = 0
         # Average ROI
         self.average_roi = 0
-        # Minimum ROI for positive reward (percentage)
-        self.minimum_roi = 0.05
         # Number of minutes of long positions used to calculate zero ratio
         self.long_candles = 0
         # Number of minutes of short positions used to calculate zero ratio
