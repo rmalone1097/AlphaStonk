@@ -6,14 +6,8 @@ from policies.wensi import *
 from stable_baselines3 import PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-# List of prime numbers as int
-with open(r'utils//prime_numbers.txt') as f:
-    lines = f.readlines()
-prime_list = lines[0].split(",")
-prime_list = [int(n) for n in prime_list]
-
 class CustomCombinedExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space: gym.spaces.Dict, features_dim=1024, prime_list=prime_list):
+    def __init__(self, observation_space: gym.spaces.Dict, features_dim=1024):
         # features_dim is specifically for the output dim of the CNN. Will have to be added to output
         # for vector extractor for total featuers_dim, which is self.features_dim later on
         super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)

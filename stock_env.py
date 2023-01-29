@@ -57,9 +57,10 @@ class StockEnv(Env):
             'vector': Box(low=np.zeros(21, dtype=np.float32), 
                 high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
         })
-        self.df = df
-        # Net worth to track cumulative reward
-        self.net_worth = 0
+        #Full data tensor (with unused data)
+        self.df_tensor = df.to_numpy()
+        # Data tensor (only relevant data)
+        self.data_tensor = self.df_tensor[:, 2:20]
         # Variable to keep track of initial underlying at start of position
         self.start_price = 1
         # Observed state (data slice)
