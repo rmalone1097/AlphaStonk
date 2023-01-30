@@ -281,7 +281,7 @@ class StockEnv(Env):
         self.average_roi = self.total_roi / self.num_positions
         self.average_holding_time = self.total_holding_time / self.num_positions
         self.average_long_roi = self.long_roi / (self.longs + 1)
-        self.average_short_toi = self.short_roi / (self.shorts + 1)
+        self.average_short_roi = self.short_roi / (self.shorts + 1)
 
         self.position_log = action
         info = {}
