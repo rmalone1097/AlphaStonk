@@ -78,6 +78,7 @@ class StockEnv(Env):
             'vector': Box(low=np.zeros(23, dtype=np.float32), 
                 high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(21, np.inf, dtype=np.float32))))
         })
+        self.df = df
         #Full data tensor (with unused data)
         self.df_tensor = df.to_numpy()
         # Data tensor (only relevant data)
