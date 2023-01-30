@@ -57,11 +57,8 @@ class TensorboardCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         self.cum_rew_1 += self.training_env.get_attr("reward")[0]
-        net_worth = self.training_env.get_attr('net_worth')[0]
         self.logger.record('variables/action', self.training_env.get_attr('action')[0])
         self.logger.record('variables/current_price', self.training_env.get_attr('current_price')[0])
-        #self.logger.record('variables/wins', self.training_env.get_attr('wins')[0])
-        #self.logger.record('variables/losses', self.training_env.get_attr('losses')[0])
         self.logger.record('variables/win_ratio', self.training_env.get_attr('win_ratio')[0])
         self.logger.record('variables/long_ratio', self.training_env.get_attr('long_ratio')[0])
         self.logger.record('variables/streak', self.training_env.get_attr('streak')[0])
