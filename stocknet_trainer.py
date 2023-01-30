@@ -57,13 +57,14 @@ class TensorboardCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         self.cum_rew_1 += self.training_env.get_attr("reward")[0]
+        self.logger.record('variables/reward', self.training_env.get_attr('reward')[0])
         self.logger.record('variables/action', self.training_env.get_attr('action')[0])
         self.logger.record('variables/current_price', self.training_env.get_attr('current_price')[0])
         self.logger.record('variables/win_ratio', self.training_env.get_attr('win_ratio')[0])
         self.logger.record('variables/long_ratio', self.training_env.get_attr('long_ratio')[0])
         self.logger.record('variables/streak', self.training_env.get_attr('streak')[0])
         self.logger.record('variables/holding_time', self.training_env.get_attr('holding_time')[0])
-        self.logger.record('variables/roi', self.training_env.get_attr('roi')[0])
+        #self.logger.record('variables/roi', self.training_env.get_attr('roi')[0])
         self.logger.record('variables/total_roi', self.training_env.get_attr('total_roi')[0])
         self.logger.record('variables/average_roi', self.training_env.get_attr('average_roi')[0])
         self.logger.record('variables/zero_ratio', self.training_env.get_attr('zero_ratio')[0])
