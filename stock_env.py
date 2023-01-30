@@ -20,7 +20,7 @@ class StockEnv(Env):
         | 2   | Short position         |
 
         ### Observation Space
-        Slice is a `ndarray` with shape `(candles,featuers)` where the elements correspond to the following:
+        Slice is a `ndarray` with shape `(candles,18)` where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | open                                 | 0    | Inf | dollars ($)  |
