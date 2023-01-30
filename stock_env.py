@@ -61,6 +61,8 @@ class StockEnv(Env):
         self.df_tensor = df.to_numpy()
         # Data tensor (only relevant data)
         self.data_tensor = self.df_tensor[:, 2:20]
+        # Num data points
+        self.num_data = self.data_tensor.shape[0]
         # Variable to keep track of initial underlying at start of position
         self.start_price = 1
         # Observed state (data slice)
@@ -108,7 +110,7 @@ class StockEnv(Env):
         # Total ROI to compute average
         self.total_roi = 0
         # Total number of positions to compute ROI average
-        self.num_positions = 0
+        self.num_positions = 1
         # Average ROI
         self.average_roi = 0
         # Number of minutes of long positions used to calculate zero ratio
@@ -132,7 +134,7 @@ class StockEnv(Env):
         # Step data window 1 candle
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
-        if last_idx + self.timestep >= len(self.df):
+        if last_idx + self.timestep >= self.num_data:
             self.wins = 0
             self.losses = 0
             self.longs = 0
@@ -150,17 +152,12 @@ class StockEnv(Env):
         else:
             done = False
 
-        # If data point after last is after market close, find the next market open point
-        if self.df.iloc[last_idx]['daily_candle_counter'] == 0:
-            for i, row in enumerate(self.df.iloc[last_idx:].itertuples()):
-                # add i to last_idx and first idx to keep slice length consistent
-                if row.daily_candle_counter != 0:
-                    first_idx, last_idx = first_idx + i, last_idx + i
-                    break
+        # While data point after last is after market close, add one until next market open point
+        while self.data_tensor[last_idx, 7] == 0:
+            first_idx, last_idx = first_idx + 1, last_idx + 1
 
-        df_slice = self.df.iloc[first_idx:last_idx]
-        self.state['slice'] = df_slice.loc[:, 'open':'ema_445'].to_numpy()
-        self.current_price = df_slice.iloc[-1]['close']
+        self.state['slice'] = self.data_tensor[first_idx:last_idx, :]
+        self.current_price = self.state['slice'][-1, 3]
 
         # Worth of position, calculated as percentage change
         if self.position_log == 1:
@@ -191,10 +188,14 @@ class StockEnv(Env):
         elif self.position_log == 0:
             if abs(reward) <= 0.27:
                 self.reward = 0.27
-            elif abs(reward) >= 0.5 and row.daily_candle_counter > 15:
+            elif abs(reward) >= 0.5 and latest_daily_candle > 15:
                 self.reward = -abs(reward)
             else:
                 self.reward = 0
+
+        vector = np.array([self.position_log, action, self.start_price, self.holding_time, self.energy])
+        last_dp = self.state['slice'][-1, :]
+        self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
 
         # Close old position and open new one
         if self.position_log != action:
@@ -240,7 +241,7 @@ class StockEnv(Env):
             self.start_price = self.current_price
             self.holding_time = self.minimum_holding_time
         
-        # Count longs and shorts
+        # Count long and short candles
         if action == 1:
             self.long_candles += 1
         elif action == 2:
@@ -252,19 +253,13 @@ class StockEnv(Env):
             self.holding_time += 1
             self.total_holding_time += 1
         
-        self.state['vector'] = np.array([action, self.position_log, self.holding_time, self.energy])
-        last_dp = self.state['slice'][-1, :]
-        self.state['vector'] = np.concatenate((self.state['vector'], last_dp), axis=0)
-        
-        #TODO: Get rid of this ugly condition
-        if self.num_positions != 0 and self.longs != 0 and self.shorts != 0:
-            self.win_ratio = self.wins / (self.num_positions)
-            self.long_ratio = self.longs / (self.longs + self.shorts)
-            self.zero_ratio = self.zeros / (self.long_candles + self.short_candles + self.zeros)
-            self.average_roi = self.total_roi / self.num_positions
-            self.average_holding_time = self.total_holding_time / self.num_positions
-            self.average_long_roi = self.long_roi / self.longs
-            self.average_short_toi = self.short_roi / self.shorts
+        self.win_ratio = self.wins / (self.num_positions)
+        self.long_ratio = self.longs / (self.longs + self.shorts)
+        self.zero_ratio = self.zeros / (self.long_candles + self.short_candles + self.zeros)
+        self.average_roi = self.total_roi / self.num_positions
+        self.average_holding_time = self.total_holding_time / self.num_positions
+        self.average_long_roi = self.long_roi / self.longs
+        self.average_short_toi = self.short_roi / self.shorts
 
         self.position_log = action
         info = {}
