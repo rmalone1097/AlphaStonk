@@ -36,12 +36,12 @@ env.reset()
 
 policy_kwargs = dict(
     features_extractor_class=CustomCombinedExtractor,
-    features_extractor_kwargs=dict(features_dim=1024)
+    features_extractor_kwargs=dict(features_dim=100)
 )
 
 #model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=logs_dir)
 #model = PPO.load(cwd + '\\models\\PPOflat2epoch\\982800', env=env)
-model = PPO('MultiInputPolicy', env, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=64, seed=4)
+model = PPO('MultiInputPolicy', env, ent_coef=0.001, verbose=1, policy_kwargs=policy_kwargs, tensorboard_log=logs_dir, batch_size=64, seed=4)
 
 print(model.policy)
 
