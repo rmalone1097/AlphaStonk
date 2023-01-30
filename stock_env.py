@@ -42,11 +42,32 @@ class StockEnv(Env):
         | 16  | ema_360                              | 0    | Inf | dollars ($)  |
         | 17  | ema_445                              | 0    | Inf | dollars ($)  |
         
-        Vector is a 'ndarray' with shape '(2,)' where the elements correspond to the following:
+        Vector is a 'ndarray' with shape '(23,)' where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
-        | 0   | action_taken                         | 0    | 2   | discrete     |
-        | 1   | holding_time                         | 0    | Inf | timesteps    |
+        | 0   | position_log                         | 0    | 2   | discrete     |
+        | 1   | action_taken                         | 0    | 2   | discrete     |
+        | 2   | start_price                          | 0    | Inf | dollars ($)  |
+        | 3   | holding_time                         | 0    | Inf | timesteps    |
+        | 4   | energy                               | 0    | Inf | N/A          |
+        | 5   | latest_open                          | 0    | Inf | dollars ($)  |
+        | 6   | latest_high                          | 0    | Inf | dollars ($)  |
+        | 7   | latest_low                           | 0    | Inf | dollars ($)  |
+        | 8   | latest_close                         | 0    | Inf | dollars ($)  |
+        | 9   | latest_volume                        | 0    | Inf | shares       |
+        | 10  | latest_vwap                          | 0    | Inf | dollars ($)  | 
+        | 11  | latest_transactions                  | 0    | Inf | transactions |
+        | 12  | latest_daily candle counter          | 0    | Inf | candles      |
+        | 13  | latest_ema_5                         | 0    | Inf | dollars ($)  |
+        | 14  | latest_ema_10                        | 0    | Inf | dollars ($)  |
+        | 15  | latest_ema_15                        | 0    | Inf | dollars ($)  |
+        | 16  | latest_ema_25                        | 0    | Inf | dollars ($)  |
+        | 17  | latest_ema_40                        | 0    | Inf | dollars ($)  |
+        | 18  | latest_ema_65                        | 0    | Inf | dollars ($)  |
+        | 19  | latest_ema_170                       | 0    | Inf | dollars ($)  |
+        | 20  | latest_ema_250                       | 0    | Inf | dollars ($)  |
+        | 21  | latest_ema_360                       | 0    | Inf | dollars ($)  |
+        | 22  | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
         self.action_space = Discrete(3)
         # Window width of data slice per step (days)
@@ -54,8 +75,8 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,18), dtype=np.float32),
-            'vector': Box(low=np.zeros(21, dtype=np.float32), 
-                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
+            'vector': Box(low=np.zeros(23, dtype=np.float32), 
+                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(21, np.inf, dtype=np.float32))))
         })
         #Full data tensor (with unused data)
         self.df_tensor = df.to_numpy()
@@ -306,7 +327,7 @@ class StockEnv(Env):
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = {'slice': df_slice.loc[:, 'open':'ema_445'].to_numpy(), 'vector': np.zeros(22, dtype=np.float32)}
+        self.state = {'slice': df_slice.loc[:, 'open':'ema_445'].to_numpy(), 'vector': np.zeros(23, dtype=np.float32)}
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [first_valid_name, first_trading_name]
