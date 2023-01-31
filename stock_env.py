@@ -71,7 +71,7 @@ class StockEnv(Env):
         '''
         self.action_space = Discrete(3)
         # Window width of data slice per step (days)
-        self.window_days = 5
+        self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,18), dtype=np.float32),
