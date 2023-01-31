@@ -309,7 +309,7 @@ class StockEnv(Env):
                 first_valid_name = i
 
                 # Calculation of first trading date, window days + 1
-                first_trading_day = first_valid_day + timedelta(days=self.window_days + 1)
+                first_trading_day = first_valid_day + timedelta(days=self.window_days)
 
                 # If Saturday or Sunday, get it to Monday
                 #TODO: i set this to 3 and 2 to fix a labor day bug. Remember that this should be 2 and 1
