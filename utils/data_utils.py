@@ -221,10 +221,10 @@ def plot_energy_cloud(df, starting_index=0, ending_index=30):
 
             if abs(reward) <= 0.27:
                 zero_rewards.append(0.27)
-            elif abs(reward) >= 0.5 and row.daily_candle_counter > 15:
-                zero_rewards.append(-abs(reward))
-            else:
+            elif row.daily_candle_counter < 15:
                 zero_rewards.append(0)
+            else:
+                zero_rewards.append(-abs(reward))
 
     df_slice['long_reward'] = long_rewards
     df_slice['short_reward'] = short_rewards

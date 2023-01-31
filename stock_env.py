@@ -210,10 +210,10 @@ class StockEnv(Env):
         elif self.position_log == 0:
             if abs(reward) <= 0.27:
                 self.reward = 0.27
-            elif abs(reward) >= 0.5 and latest_daily_candle > 15:
-                self.reward = -abs(reward)
-            else:
+            elif latest_daily_candle < 15:
                 self.reward = 0
+            else:
+                self.reward = -abs(reward)
 
         vector = np.array([self.position_log, action, self.start_price, self.holding_time, self.energy])
         last_dp = self.state['slice'][-1, :]
