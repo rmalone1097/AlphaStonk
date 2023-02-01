@@ -163,10 +163,11 @@ class StockEnv(Env):
             self.shorts = 0
             self.long_candles = 0
             self.short_candles = 0
+            self.zeros = 1
             self.long_roi = 0
             self.short_roi = 0
             self.total_roi = 0
-            self.num_positions = 0
+            self.num_positions = 1
             self.position_log = 0
             self.total_holding_time = 0
             action = 0
@@ -274,11 +275,11 @@ class StockEnv(Env):
             self.total_holding_time += 1
         
         #TODO: figure out why num_positions isnt enough (division by zero error)
-        self.win_ratio = self.wins / (self.num_positions + 1)
-        self.long_ratio = self.longs / (self.num_positions + 1)
+        self.win_ratio = self.wins / self.num_positions
+        self.long_ratio = self.longs / self.num_positions
         self.zero_ratio = self.zeros / (self.long_candles + self.short_candles + self.zeros)
-        self.average_roi = self.total_roi / (self.num_positions + 1)
-        self.average_holding_time = self.total_holding_time / (self.num_positions + 1)
+        self.average_roi = self.total_roi / self.num_positions
+        self.average_holding_time = self.total_holding_time / self.num_positions
         self.average_long_roi = self.long_roi / (self.longs + 1)
         self.average_short_roi = self.short_roi / (self.shorts + 1)
 
