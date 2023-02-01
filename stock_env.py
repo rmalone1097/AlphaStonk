@@ -71,7 +71,7 @@ class StockEnv(Env):
         '''
         self.action_space = Discrete(3)
         # Window width of data slice per step (days)
-        self.window_days = 5
+        self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,18), dtype=np.float32),
@@ -163,10 +163,11 @@ class StockEnv(Env):
             self.shorts = 0
             self.long_candles = 0
             self.short_candles = 0
+            self.zeros = 1
             self.long_roi = 0
             self.short_roi = 0
             self.total_roi = 0
-            self.num_positions = 0
+            self.num_positions = 1
             self.position_log = 0
             self.total_holding_time = 0
             action = 0
@@ -309,7 +310,7 @@ class StockEnv(Env):
                 first_valid_name = i
 
                 # Calculation of first trading date, window days + 1
-                first_trading_day = first_valid_day + timedelta(days=self.window_days + 1)
+                first_trading_day = first_valid_day + timedelta(days=self.window_days)
 
                 # If Saturday or Sunday, get it to Monday
                 #TODO: i set this to 3 and 2 to fix a labor day bug. Remember that this should be 2 and 1
