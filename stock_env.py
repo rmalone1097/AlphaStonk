@@ -208,9 +208,7 @@ class StockEnv(Env):
         elif self.position_log == 2:
             self.reward = -reward
         elif self.position_log == 0:
-            if abs(reward) <= 0.27:
-                self.reward = 0.27
-            elif latest_daily_candle < 15:
+            if abs(reward) <= 0.27 or latest_daily_candle < 15:
                 self.reward = 0
             else:
                 self.reward = -abs(reward)
