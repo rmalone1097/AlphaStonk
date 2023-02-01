@@ -274,7 +274,6 @@ class StockEnv(Env):
             self.holding_time += 1
             self.total_holding_time += 1
         
-        #TODO: figure out why num_positions isnt enough (division by zero error)
         self.win_ratio = self.wins / self.num_positions
         self.long_ratio = self.longs / self.num_positions
         self.zero_ratio = self.zeros / (self.long_candles + self.short_candles + self.zeros)
