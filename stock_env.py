@@ -39,27 +39,28 @@ class StockEnv(Env):
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | position_log                         | 0    | 2   | discrete     |
         | 1   | action_taken                         | 0    | 2   | discrete     |
-        | 2   | start_price                          | 0    | Inf | dollars ($)  |
-        | 3   | holding_time                         | 0    | Inf | timesteps    |
-        | 4   | energy                               | 0    | Inf | N/A          |
-        | 5   | latest_open                          | 0    | Inf | dollars ($)  |
-        | 6   | latest_high                          | 0    | Inf | dollars ($)  |
-        | 7   | latest_low                           | 0    | Inf | dollars ($)  |
-        | 8   | latest_close                         | 0    | Inf | dollars ($)  |
-        | 9   | latest_volume                        | 0    | Inf | shares       |
-        | 10  | latest_vwap                          | 0    | Inf | dollars ($)  | 
-        | 11  | latest_transactions                  | 0    | Inf | transactions |
-        | 12  | latest_daily candle counter          | 0    | Inf | candles      |
-        | 13  | latest_ema_5                         | 0    | Inf | dollars ($)  |
-        | 14  | latest_ema_10                        | 0    | Inf | dollars ($)  |
-        | 15  | latest_ema_15                        | 0    | Inf | dollars ($)  |
-        | 16  | latest_ema_25                        | 0    | Inf | dollars ($)  |
-        | 17  | latest_ema_40                        | 0    | Inf | dollars ($)  |
-        | 18  | latest_ema_65                        | 0    | Inf | dollars ($)  |
-        | 19  | latest_ema_170                       | 0    | Inf | dollars ($)  |
-        | 20  | latest_ema_250                       | 0    | Inf | dollars ($)  |
-        | 21  | latest_ema_360                       | 0    | Inf | dollars ($)  |
-        | 22  | latest_ema_445                       | 0    | Inf | dollars ($)  |
+        | 2   | portfolio_value                      | 0    | Inf | dollars ($)  |
+        | 3   | start_price                          | 0    | Inf | dollars ($)  |
+        | 4   | holding_time                         | 0    | Inf | timesteps    |
+        | 5   | energy                               | 0    | Inf | N/A          |
+        | 6   | latest_open                          | 0    | Inf | dollars ($)  |
+        | 7   | latest_high                          | 0    | Inf | dollars ($)  |
+        | 8   | latest_low                           | 0    | Inf | dollars ($)  |
+        | 9   | latest_close                         | 0    | Inf | dollars ($)  |
+        | 10  | latest_volume                        | 0    | Inf | shares       |
+        | 11  | latest_vwap                          | 0    | Inf | dollars ($)  | 
+        | 12  | latest_transactions                  | 0    | Inf | transactions |
+        | 13  | latest_daily candle counter          | 0    | Inf | candles      |
+        | 14  | latest_ema_5                         | 0    | Inf | dollars ($)  |
+        | 15  | latest_ema_10                        | 0    | Inf | dollars ($)  |
+        | 16  | latest_ema_15                        | 0    | Inf | dollars ($)  |
+        | 17  | latest_ema_25                        | 0    | Inf | dollars ($)  |
+        | 18  | latest_ema_40                        | 0    | Inf | dollars ($)  |
+        | 19  | latest_ema_65                        | 0    | Inf | dollars ($)  |
+        | 20  | latest_ema_170                       | 0    | Inf | dollars ($)  |
+        | 21  | latest_ema_250                       | 0    | Inf | dollars ($)  |
+        | 22  | latest_ema_360                       | 0    | Inf | dollars ($)  |
+        | 23  | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
         self.action_space = Discrete(3)
         # Window width of data slice per step (days)
@@ -68,7 +69,7 @@ class StockEnv(Env):
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,7), dtype=np.float32),
             'vector': Box(low=np.zeros(23, dtype=np.float32), 
-                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(21, np.inf, dtype=np.float32))))
+                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(22, np.inf, dtype=np.float32))))
         })
         self.df = df
         #Full data tensor (with unused data)
@@ -143,6 +144,10 @@ class StockEnv(Env):
         self.energy = 0
         # Episode length. Should be rollout length (for algos with rollout) * some scalar
         self.ep_timesteps = 2048 * 5
+        # Tracks net worth to put in vector (Markov property?)
+        self.portfolio = 0
+        # For use in portfolio calculation
+        self.transaction_value = 1000
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -193,8 +198,10 @@ class StockEnv(Env):
                 self.reward = 0
             else:
                 self.reward = -abs(reward)
+        
+        self.portfolio += self.transaction_value * position_value
 
-        vector = np.array([self.position_log, action, self.start_price, self.holding_time, self.energy])
+        vector = np.array([self.position_log, action, self.portfolio, self.start_price, self.holding_time, self.energy])
         last_dp = self.state['slice'][-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
 
@@ -289,6 +296,7 @@ class StockEnv(Env):
         self.num_positions = 1
         self.position_log = 0
         self.total_holding_time = 0
+        self.portfolio = 0
 
         # Finds random point in the data to start from
         start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390)
@@ -297,7 +305,7 @@ class StockEnv(Env):
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[start_idx:end_idx]
         self.state = {'slice': df_slice.loc[:, 'open':'transactions'].to_numpy(), 
-        'vector': np.concatenate(np.zeros(5, dtype=np.float32), df_slice.iloc[-1].loc[:, 'open':'ema_445'].to_numpy())}
+        'vector': np.concatenate(np.zeros(6, dtype=np.float32), df_slice.iloc[-1].loc[:, 'open':'ema_445'].to_numpy())}
 
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
