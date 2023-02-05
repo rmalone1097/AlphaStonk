@@ -7,6 +7,9 @@ import torch
 import numpy as np
 import pandas as pd
 from utils.data_utils import *
+import random
+
+random.seed(4)
 
 class StockEnv(Env):
     def __init__(self, df):
@@ -20,7 +23,7 @@ class StockEnv(Env):
         | 2   | Short position         |
 
         ### Observation Space
-        Slice is a `ndarray` with shape `(candles,18)` where the elements correspond to the following:
+        Slice is a `ndarray` with shape `(390 * window_days,18)` where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | open                                 | 0    | Inf | dollars ($)  |
@@ -30,17 +33,6 @@ class StockEnv(Env):
         | 4   | volume                               | 0    | Inf | shares       |
         | 5   | vwap                                 | 0    | Inf | dollars ($)  | 
         | 6   | transactions                         | 0    | Inf | transactions |
-        | 7   | daily candle counter                 | 0    | Inf | candles      |
-        | 8   | ema_5                                | 0    | Inf | dollars ($)  |
-        | 9   | ema_10                               | 0    | Inf | dollars ($)  |
-        | 10  | ema_15                               | 0    | Inf | dollars ($)  |
-        | 11  | ema_25                               | 0    | Inf | dollars ($)  |
-        | 12  | ema_40                               | 0    | Inf | dollars ($)  |
-        | 13  | ema_65                               | 0    | Inf | dollars ($)  |
-        | 14  | ema_170                              | 0    | Inf | dollars ($)  |
-        | 15  | ema_250                              | 0    | Inf | dollars ($)  |
-        | 16  | ema_360                              | 0    | Inf | dollars ($)  |
-        | 17  | ema_445                              | 0    | Inf | dollars ($)  |
         
         Vector is a 'ndarray' with shape '(23,)' where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
@@ -74,7 +66,7 @@ class StockEnv(Env):
         self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
-            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,18), dtype=np.float32),
+            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,7), dtype=np.float32),
             'vector': Box(low=np.zeros(23, dtype=np.float32), 
                 high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(21, np.inf, dtype=np.float32))))
         })
@@ -82,7 +74,7 @@ class StockEnv(Env):
         #Full data tensor (with unused data)
         self.df_tensor = df.to_numpy()
         # Data tensor (only relevant data)
-        self.data_tensor = self.df_tensor[:, 2:20]
+        self.data_tensor = self.df_tensor[:, 2:9]
         # Num data points
         self.num_data = self.data_tensor.shape[0]
         # Variable to keep track of initial underlying at start of position
@@ -93,7 +85,7 @@ class StockEnv(Env):
         self.state_idx = []
         # Variable to keep track of position between steps
         self.position_log = 0
-        # Timestep length to update action
+        # Keeps track of timestep during training
         self.timestep = 1
         # Logged value representing amount of long positions
         self.longs = 0
@@ -149,6 +141,8 @@ class StockEnv(Env):
         self.average_short_roi = 0
         # Energy (5-15 EMA cloud difference) used for reward
         self.energy = 0
+        # Episode length. Should be rollout length (for algos with rollout) * some scalar
+        self.ep_timesteps = 2048 * 5
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -156,21 +150,7 @@ class StockEnv(Env):
         # Step data window 1 candle
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
-        if last_idx + self.timestep >= self.num_data:
-            self.wins = 0
-            self.losses = 0
-            self.longs = 0
-            self.shorts = 0
-            self.long_candles = 0
-            self.short_candles = 0
-            self.zeros = 1
-            self.long_roi = 0
-            self.short_roi = 0
-            self.total_roi = 0
-            self.num_positions = 1
-            self.position_log = 0
-            self.total_holding_time = 0
-            action = 0
+        if self.timestep == self.ep_timesteps:
             done = True
         else:
             done = False
@@ -286,6 +266,7 @@ class StockEnv(Env):
         info = {}
         self.action = action
         self.state_idx = [first_idx, last_idx]
+        self.timestep += 1
 
         return self.state, self.reward, done, info
 
@@ -293,42 +274,31 @@ class StockEnv(Env):
         pass
 
     def reset(self):
-        # Search through dataframe and look for first data point where market is open
-        first_found = False
-        first_trading_stamp = 0
 
-        for i, row in enumerate(self.df.itertuples()):
-            if row.daily_candle_counter != 0 and first_found == False:
-                first_found = True
+        self.wins = 0
+        self.losses = 0
+        self.longs = 0
+        self.shorts = 0
+        self.long_candles = 0
+        self.short_candles = 0
+        self.zeros = 1
+        self.long_roi = 0
+        self.short_roi = 0
+        self.total_roi = 0
+        self.num_positions = 1
+        self.position_log = 0
+        self.total_holding_time = 0
 
-                # First market open data point
-                first_valid_day = datetime.datetime.fromtimestamp(int(row.timestamp) / 1000, pytz.timezone('US/Eastern'))
-
-                # Name, or set index of df, is expected to be timestep (milliseconds) and will be used to locate data points of interest
-                first_valid_name = i
-
-                # Calculation of first trading date, window days + 1
-                first_trading_day = first_valid_day + timedelta(days=self.window_days)
-
-                # If Saturday or Sunday, get it to Monday
-                #TODO: i set this to 3 and 2 to fix a labor day bug. Remember that this should be 2 and 1
-                if first_trading_day.weekday() == 5:
-                    first_trading_day += timedelta(days=3)
-                elif first_trading_day.weekday() == 6:
-                    first_trading_day += timedelta(days=2)
-                assert (first_trading_day.hour, first_trading_day.minute) == (9, 30), "Calculation of first trading point is incorrect"
-
-                # Calculation of first trading point on first trading day (9:30AM EST on first trading day)
-                first_trading_stamp = int(round(first_trading_day.timestamp() * 1000))
-
-            if row.timestamp == first_trading_stamp:
-                first_trading_name = i
-                break
+        # Finds random point in the data to start from
+        start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390)
+        end_idx = self.window_days * 390
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
-        df_slice = self.df.iloc[first_valid_name:first_trading_name]
-        self.state = {'slice': df_slice.loc[:, 'open':'ema_445'].to_numpy(), 'vector': np.zeros(23, dtype=np.float32)}
+        df_slice = self.df.iloc[start_idx:end_idx]
+        self.state = {'slice': df_slice.loc[:, 'open':'transactions'].to_numpy(), 
+        'vector': np.concatenate(np.zeros(5, dtype=np.float32), df_slice.iloc[-1].loc[:, 'open':'ema_445'].to_numpy())}
+        
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
-        self.state_idx = [first_valid_name, first_trading_name]
+        self.state_idx = [start_idx, end_idx]
         return self.state
