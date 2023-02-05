@@ -171,10 +171,10 @@ class StockEnv(Env):
             position_value = 0
         
         # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
-        latest_close = self.state['slice'][-1, 3]
-        latest_daily_candle = self.state['slice'][-1, 7]
-        latest_ema_25 = self.state['slice'][-1, 11]
-        latest_ema_170 = self.state['slice'][-1, 14]
+        latest_close = self.current_price
+        latest_daily_candle = self.state['vector'][12]
+        latest_ema_25 = self.state['slice'][16]
+        latest_ema_170 = self.state['slice'][19]
         self.energy = (latest_ema_25 - latest_ema_170) / latest_ema_170 * 100
 
         # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
@@ -275,6 +275,7 @@ class StockEnv(Env):
 
     def reset(self):
 
+        self.timestep = 0
         self.wins = 0
         self.losses = 0
         self.longs = 0
@@ -297,7 +298,7 @@ class StockEnv(Env):
         df_slice = self.df.iloc[start_idx:end_idx]
         self.state = {'slice': df_slice.loc[:, 'open':'transactions'].to_numpy(), 
         'vector': np.concatenate(np.zeros(5, dtype=np.float32), df_slice.iloc[-1].loc[:, 'open':'ema_445'].to_numpy())}
-        
+
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [start_idx, end_idx]
