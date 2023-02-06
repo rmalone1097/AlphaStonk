@@ -20,8 +20,8 @@ from utils.data_utils import add_indicators
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--framework",
-    choices=["torch"],
-    default="torch",
+    choices=["tf2"],
+    default="tf2",
     help="The DL framework specifier.",
 )
 parser.add_argument(
