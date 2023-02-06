@@ -68,7 +68,7 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,7), dtype=np.float32),
-            'vector': Box(low=np.zeros(23, dtype=np.float32), 
+            'vector': Box(low=np.zeros(24, dtype=np.float32), 
                 high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(22, np.inf, dtype=np.float32))))
         })
         self.df = df
