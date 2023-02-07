@@ -3,7 +3,6 @@ from gym.spaces import Discrete, Box, Dict
 from typing import Optional
 import datetime
 
-import torch
 import numpy as np
 import pandas as pd
 from utils.data_utils import *
