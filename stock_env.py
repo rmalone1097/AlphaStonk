@@ -2,6 +2,7 @@ from gym import Env
 from gym.spaces import Discrete, Box, Dict
 from typing import Optional
 import datetime
+from ray.rllib.env.env_context import EnvContext
 
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ import random
 random.seed(4)
 
 class StockEnv(Env):
-    def __init__(self, df):
+    def __init__(self, config: EnvContext):
         '''
         ### Action Space
         The action is a `ndarray` with shape `(1,)` which can take values in range # tickers * 0 (short/long/none)
@@ -22,7 +23,7 @@ class StockEnv(Env):
         | 2   | Short position         |
 
         ### Observation Space
-        Slice is a `ndarray` with shape `(390 * window_days,18)` where the elements correspond to the following:
+        Slice is a `ndarray` with shape `(390 * window_days,7)` where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | open                                 | 0    | Inf | dollars ($)  |
@@ -33,15 +34,15 @@ class StockEnv(Env):
         | 5   | vwap                                 | 0    | Inf | dollars ($)  | 
         | 6   | transactions                         | 0    | Inf | transactions |
         
-        Vector is a 'ndarray' with shape '(23,)' where the elements correspond to the following:
+        Vector is a 'ndarray' with shape '(24,)' where the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
-        | 0   | position_log                         | 0    | 2   | discrete     |
-        | 1   | action_taken                         | 0    | 2   | discrete     |
-        | 2   | portfolio_value                      | 0    | Inf | dollars ($)  |
-        | 3   | start_price                          | 0    | Inf | dollars ($)  |
-        | 4   | holding_time                         | 0    | Inf | timesteps    |
-        | 5   | energy                               | 0    | Inf | N/A          |
+        | 0   | portfolio_value                      | -Inf | Inf | dollars ($)  |
+        | 1   | energy                               | -Inf | Inf | N/A          |
+        | 2   | position_log                         | 0    | 2   | discrete     |
+        | 3   | action_taken                         | 0    | 2   | discrete     |
+        | 4   | start_price                          | 0    | Inf | dollars ($)  |
+        | 5   | holding_time                         | 0    | Inf | timesteps    |
         | 6   | latest_open                          | 0    | Inf | dollars ($)  |
         | 7   | latest_high                          | 0    | Inf | dollars ($)  |
         | 8   | latest_low                           | 0    | Inf | dollars ($)  |
@@ -67,14 +68,14 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,7), dtype=np.float32),
-            'vector': Box(low=np.zeros(24, dtype=np.float32), 
-                high=np.concatenate((np.array([2, 2], dtype=np.float32), np.full(22, np.inf, dtype=np.float32))))
+            'vector': Box(low=np.concatenate((np.full(2, -np.inf, dtype=np.float32), np.zeros(22, dtype=np.float32))), 
+                high=np.concatenate((np.full(2, np.inf, dtype=np.float32),np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
         })
-        self.df = df
+        self.df = config["df"]
         #Full data tensor (with unused data)
-        self.df_tensor = df.to_numpy()
+        self.df_tensor = self.df.to_numpy()
         # Data tensor (only relevant data)
-        self.data_tensor = self.df_tensor[:, 2:9]
+        self.data_tensor = self.df_tensor[:, 2:20]
         # Num data points
         self.num_data = self.data_tensor.shape[0]
         # Variable to keep track of initial underlying at start of position
@@ -159,11 +160,13 @@ class StockEnv(Env):
         else:
             done = False
 
-        # While data point after last is after market close, add one until next market open point
+        # Environment is never seeing points before or after market close
+        '''# While data point after last is after market close, add one until next market open point
         while self.data_tensor[last_idx, 7] == 0:
-            first_idx, last_idx = first_idx + 1, last_idx + 1
+            first_idx, last_idx = first_idx + 1, last_idx + 1'''
 
-        self.state['slice'] = self.data_tensor[first_idx:last_idx, :]
+        full_slice = self.data_tensor[first_idx:last_idx, :]
+        self.state['slice'] = full_slice[:, 0:7]
         self.current_price = self.state['slice'][-1, 3]
 
         # Worth of position, calculated as percentage change
@@ -176,9 +179,9 @@ class StockEnv(Env):
         
         # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
         latest_close = self.current_price
-        latest_daily_candle = self.state['vector'][12]
-        latest_ema_25 = self.state['slice'][16]
-        latest_ema_170 = self.state['slice'][19]
+        latest_daily_candle = full_slice[-1, 7]
+        latest_ema_25 = full_slice[-1, 11]
+        latest_ema_170 = full_slice[-1, 14]
         self.energy = (latest_ema_25 - latest_ema_170) / latest_ema_170 * 100
 
         # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
@@ -200,8 +203,8 @@ class StockEnv(Env):
         
         self.portfolio += self.transaction_value * position_value
 
-        vector = np.array([self.position_log, action, self.portfolio, self.start_price, self.holding_time, self.energy])
-        last_dp = self.state['slice'][-1, :]
+        vector = np.array([self.portfolio, self.energy, self.position_log, action, self.start_price, self.holding_time])
+        last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
 
         # Close old position and open new one
@@ -299,13 +302,18 @@ class StockEnv(Env):
 
         # Finds random point in the data to start from
         start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390)
-        end_idx = self.window_days * 390
+        end_idx = start_idx + self.window_days * 390
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
         df_slice = self.df.iloc[start_idx:end_idx]
-        self.state = {'slice': df_slice.loc[:, 'open':'transactions'].to_numpy(), 
-        'vector': np.concatenate(np.zeros(6, dtype=np.float32), df_slice.iloc[-1].loc[:, 'open':'ema_445'].to_numpy())}
-
+        vector_slice = df_slice.loc[:, 'open':'ema_445']
+        #print(vector_slice)
+        #print(vector_slice.iloc[-1])
+        #print(df_slice)
+        #TODO: Transactions is spelled wrong in the df
+        self.state = {'slice': df_slice.loc[:, 'open':'transacitons'].to_numpy(), 
+        'vector': np.concatenate((np.zeros(6, dtype=np.float32), vector_slice.iloc[-1].to_numpy()))}
+        #print(self.state['vector'])
         self.current_price = self.state['slice'][0, 3]
         self.start_price = self.current_price
         self.state_idx = [start_idx, end_idx]
