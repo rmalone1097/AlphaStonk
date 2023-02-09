@@ -31,10 +31,10 @@ parser.add_argument(
     "--run", type=str, default="PPO", help="The RLlib-registered algorithm to use."
 )
 parser.add_argument(
-    "--stop-iters", type=int, default=600, help="Number of iterations to train."
+    "--stop-iters", type=int, default=6000, help="Number of iterations to train."
 )
 parser.add_argument(
-    "--stop-timesteps", type=int, default=200000, help="Number of timesteps to train."
+    "--stop-timesteps", type=int, default=10000000, help="Number of timesteps to train."
 )
 '''parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
@@ -47,7 +47,7 @@ trading_df = trading_df.fillna(0)
 
 if __name__ == "__main__":
 
-    ray.init()
+    ray.init(num_gpus=1)
     args = parser.parse_args()
     config = (
         get_trainable_cls(args.run)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         .environment(StockEnv, env_config={"df": trading_df})
         .framework(args.framework)
         .rollouts(num_rollout_workers=1)
-        .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
+        .resources(num_gpus=1)
     )
     stop = {
         "training_iteration": args.stop_iters,
