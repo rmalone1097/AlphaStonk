@@ -9,9 +9,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import torch
 import tensorflow as tf
+
 import ray
 from ray import air, tune
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
+from ray.rllib.evaluation import Episode, RolloutWorker
 import ray
 from ray import tune
 from ray.rllib.algorithms.ppo import PPO, PPOConfig
@@ -28,13 +30,10 @@ parser.add_argument(
     help="The DL framework specifier.",
 )
 parser.add_argument(
-    "--run", type=str, default="PPO", help="The RLlib-registered algorithm to use."
-)
-parser.add_argument(
     "--stop-iters", type=int, default=6000, help="Number of iterations to train."
 )
 parser.add_argument(
-    "--stop-timesteps", type=int, default=10000000, help="Number of timesteps to train."
+    "--stop-timesteps", type=int, default=10000, help="Number of timesteps to train."
 )
 '''parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
@@ -50,10 +49,10 @@ if __name__ == "__main__":
     ray.init(num_gpus=1)
     args = parser.parse_args()
     config = (
-        get_trainable_cls(args.run)
-        .get_default_config()
+        PPOConfig()
         .environment(StockEnv, env_config={"df": trading_df})
         .framework(args.framework)
+        .training()
         .rollouts(num_rollout_workers=1)
         .resources(num_gpus=1)
     )
@@ -62,6 +61,13 @@ if __name__ == "__main__":
         "timesteps_total" : args.stop_timesteps
     }
     tuner = tune.Tuner(
-        args.run, param_space=config.to_dict(), run_config=air.RunConfig(stop=stop, verbose=1)
+        "PPO", param_space=config.to_dict(), run_config=air.RunConfig(
+            stop=stop, 
+            verbose=1, 
+            checkpoint_config=air.CheckpointConfig(checkpoint_at_end=True)
+        )
     )
-    tuner.fit()
+    results = tuner.fit()
+
+    best_result = results.get_best_result(metric="episode_reward_mean", mode="max")
+    best_checkpoint = best_result.checkpoint

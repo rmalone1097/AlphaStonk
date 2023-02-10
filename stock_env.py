@@ -9,7 +9,7 @@ import pandas as pd
 from utils.data_utils import *
 import random
 
-random.seed(4)
+random.seed(10)
 
 class StockEnv(Env):
     def __init__(self, config: EnvContext):
@@ -166,6 +166,7 @@ class StockEnv(Env):
             first_idx, last_idx = first_idx + 1, last_idx + 1'''
 
         full_slice = self.data_tensor[first_idx:last_idx, :]
+        assert full_slice.shape[0] == last_idx - first_idx, "Full Slice is failing"
         self.state['slice'] = full_slice[:, 0:7]
         self.current_price = self.state['slice'][-1, 3]
 
@@ -301,7 +302,7 @@ class StockEnv(Env):
         self.portfolio = 0
 
         # Finds random point in the data to start from
-        start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390)
+        start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390 - 1)
         end_idx = start_idx + self.window_days * 390
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
