@@ -15,7 +15,7 @@ class StockEnv(Env):
     def __init__(self, config: EnvContext):
         '''
         ### Action Space
-        The action is a `ndarray` with shape `(1,)` which can take values in range # tickers * 0 (short/long/none)
+        The action is a `ndarray` with shape `(3,)` (short/long/none)
         | Num | Action                 |
         |-----|------------------------|
         | 0   | No position            |

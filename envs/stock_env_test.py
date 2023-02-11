@@ -15,7 +15,7 @@ class StockEnv(Env):
     def __init__(self, config: EnvContext):
         '''
         ### Action Space
-        The action is a `ndarray` with shape `(1,)` which can take values in range # tickers * 0 (short/long/none)
+        The action is a `ndarray` with shape `(3,)` (short/long/none)
         | Num | Action                 |
         |-----|------------------------|
         | 0   | No position            |
@@ -155,7 +155,7 @@ class StockEnv(Env):
         # Step data window 1 candle
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
-        if self.timestep == self.ep_timesteps:
+        if self.timestep == self.num_data - 1:
             done = True
         else:
             done = False
@@ -301,8 +301,8 @@ class StockEnv(Env):
         self.total_holding_time = 0
         self.portfolio = 0
 
-        # Finds random point in the data to start from
-        start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390 - 1)
+        # Starts from beginning of data frame
+        start_idx = 0
         end_idx = start_idx + self.window_days * 390
 
         # The state of the environment is the data slice that the agent will have access to to make a decision

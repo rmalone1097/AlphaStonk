@@ -147,7 +147,7 @@ def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir
         counter += 1 
 
         if counter == 5:
-            #time.sleep(60)
+            time.sleep(60)
             counter = 0
             str(current_date_obj + timedelta(days=datedelta))
 
