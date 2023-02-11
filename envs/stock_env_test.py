@@ -12,7 +12,7 @@ import random
 random.seed(10)
 
 class StockEnv(Env):
-    def __init__(self, config: EnvContext):
+    def __init__(self, df):
         '''
         ### Action Space
         The action is a `ndarray` with shape `(3,)` (short/long/none)
@@ -71,7 +71,7 @@ class StockEnv(Env):
             'vector': Box(low=np.concatenate((np.full(2, -np.inf, dtype=np.float32), np.zeros(22, dtype=np.float32))), 
                 high=np.concatenate((np.full(2, np.inf, dtype=np.float32),np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
         })
-        self.df = config["df"]
+        self.df = df
         #Full data tensor (with unused data)
         self.df_tensor = self.df.to_numpy()
         # Data tensor (only relevant data)
@@ -166,7 +166,8 @@ class StockEnv(Env):
             first_idx, last_idx = first_idx + 1, last_idx + 1'''
 
         full_slice = self.data_tensor[first_idx:last_idx, :]
-        assert full_slice.shape[0] == last_idx - first_idx, "Full Slice is failing"
+        if full_slice.shape[0] != last_idx - first_idx:
+            done = True
         self.state['slice'] = full_slice[:, 0:7]
         self.current_price = self.state['slice'][-1, 3]
 

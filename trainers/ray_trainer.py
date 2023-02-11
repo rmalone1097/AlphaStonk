@@ -68,6 +68,3 @@ if __name__ == "__main__":
         )
     )
     results = tuner.fit()
-
-    best_result = results.get_best_result(metric="episode_reward_mean", mode="max")
-    best_checkpoint = best_result.checkpoint
