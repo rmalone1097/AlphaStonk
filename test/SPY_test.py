@@ -39,10 +39,10 @@ with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'results.csv', newline=
     reader = csv.reader(f)
     data = list(reader)
 
-print(data)
-
 def plot_roi_list(roi_list):
-    plt.plot(roi_list[0])
+    plt.plot([round(float(i), 2) for i in roi_list])
+    plt.plot(np.linspace(0, len(test_df), len(test_df)), [(price - test_df['close'].iloc[0]) / test_df['close'].iloc[0] * 100 for price in test_df['close']])
     plt.show()
 
-plot_roi_list(data)
+print(data[0])
+plot_roi_list(data[0])

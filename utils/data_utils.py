@@ -16,13 +16,14 @@ from urllib3 import HTTPResponse
 from polygon import RESTClient
 from tqdm import tqdm
 
-API_KEY = 'jGYQQMOIgDQ9c3uefzYyi2AJLcqLXZzM'
+POLYGON_API_KEY = 'jGYQQMOIgDQ9c3uefzYyi2AJLcqLXZzM'
+FINNHUB_API_KEY = 'cfklqe9r01qokcgl4g20cfklqe9r01qokcgl4g2g'
 dirname = os.path.dirname(__file__)
 
 # Date format YYYY-MM-DD
 #TODO: build in support to handle NaN's (Thanksgiving)
 def write_data_to_new_file(ticker:str, multiplier:int, start_date:str, end_date:str, dir:str=dirname+'/', timespan:str='minute'):
-    client = RESTClient(API_KEY)
+    client = RESTClient(POLYGON_API_KEY)
     aggs = cast(
         HTTPResponse,
         client.get_aggs(
@@ -48,7 +49,7 @@ def write_data_to_new_file(ticker:str, multiplier:int, start_date:str, end_date:
     return path
 
 def append_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str, path:str, timespan:str='minute'):
-    client = RESTClient(API_KEY)
+    client = RESTClient(POLYGON_API_KEY)
     aggs = cast(
         HTTPResponse,
         client.get_aggs(
