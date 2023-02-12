@@ -1,5 +1,6 @@
 import sys
 import os
+import csv
 import pandas as pd
 import numpy as np
 import gym
@@ -34,8 +35,14 @@ def test_algo(algo_path, env):
         roi_list.append(env.total_roi)
     return roi_list
 
+with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'results.csv', newline='') as f:
+    reader = csv.reader(f)
+    data = list(reader)
+
+print(data)
+
 def plot_roi_list(roi_list):
-    plt.plot(roi_list)
+    plt.plot(roi_list[0])
     plt.show()
 
-plot_roi_list(test_algo(algo_path, env))
+plot_roi_list(data)
