@@ -8,8 +8,11 @@ import pandas as pd
 import pytz
 import pandas_ta as ta
 import mplfinance as mpf
+import numpy as np
+import finnhub
 
-from datetime import timedelta, date
+from pathlib import Path
+from datetime import timedelta, date, datetime
 from scipy.interpolate import interp1d
 from typing import cast
 from urllib3 import HTTPResponse
@@ -19,6 +22,31 @@ from tqdm import tqdm
 POLYGON_API_KEY = 'jGYQQMOIgDQ9c3uefzYyi2AJLcqLXZzM'
 FINNHUB_API_KEY = 'cfklqe9r01qokcgl4g20cfklqe9r01qokcgl4g2g'
 dirname = os.path.dirname(__file__)
+
+def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timespan=1, dir=Path.home() / 'data'):
+    finnhub_client = finnhub.Client(api_key=FINNHUB_API_KEY)
+    original_start_stamp = start_stamp
+
+    for ticker in tickers:
+        # Go two weeks at a time to get all data
+        start_datetime = datetime.fromtimestamp(original_start_stamp)
+        span_datetime = start_datetime + timedelta(days=14)
+        span_stamp = int(datetime.timestamp(span_datetime))
+        print(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
+        df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
+
+        while span_stamp < end_stamp:
+            start_stamp = span_stamp
+            start_datetime = datetime.fromtimestamp(start_stamp)
+            span_datetime = start_datetime + timedelta(days=14)
+            span_stamp = int(datetime.timestamp(span_datetime))
+            new_df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), start_stamp, span_stamp))
+            df = pd.concat([df, new_df])
+            print(span_datetime)
+
+        df.to_pickle(dir / str(ticker + '_' + str(original_start_stamp) + '_' + str(end_stamp) + '_' + str(timespan) + '_raw.pkl'))
+    
+    return df
 
 # Date format YYYY-MM-DD
 #TODO: build in support to handle NaN's (Thanksgiving)
@@ -73,15 +101,35 @@ def append_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str
             writer.writerow(row)
     return path
 
-def df_builder(path_to_csv:str):
-    df = pd.read_csv(path_to_csv, header=0)
+def df_builder(ticker, pickle_dir):
+    df = pd.read_pickle(pickle_dir)
+    array = df.to_numpy()
+    built_array = np.array([array[0, :]])
+    prev_i = 0
+    repeat_max = 30
+
+    for i in tqdm(range(1, array.shape[0])):
+        prev_dt = datetime.fromtimestamp(array[i-1, 5])
+        dt = datetime.fromtimestamp(array[i, 5])
+        delta = dt - prev_dt
+        m_delta = int(delta.total_seconds() / 60)
+        row = np.array([array[i-1, :]])
+
+        if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
+            built_array = np.concatenate((built_array, array[prev_i+1 : i]))
+            built_array = np.concatenate((built_array, np.repeat(row, min(m_delta, repeat_max), axis=0)))
+            prev_i = i
+    
+    df = pd.DataFrame(built_array, columns=['close', 'high', 'low', 'open', 'status', 'timestamp', 'volume'])
+    df.to_pickle(Path.home() / 'data' / ticker + '_partialbuilt.pkl')
+
     daily_candle_counter = []
     prev_counter = 0
     prev_date = 0
     spaced_entries = dict()
     for i, row in tqdm(enumerate(df.itertuples(index=False)), total=len(df)):
         counter = 0
-        date = datetime.datetime.fromtimestamp(int(row.timestamp / 1000), pytz.timezone('US/Eastern'))
+        date = datetime.fromtimestamp(int(row.timestamp), pytz.timezone('US/Eastern'))
         # Make daily candle counter during trading hours
         if prev_counter != 0:
             if date.hour == 16 and date.minute == 0:
@@ -93,9 +141,10 @@ def df_builder(path_to_csv:str):
         daily_candle_counter.append(counter)
         prev_counter = counter
 
-        # Look for missing data points and repeat previous data points to make up for it
+        '''# Look for missing data points and repeat previous data points to make up for it
         # TODO: Read CSV into lists to improve efficiency of appending
         if prev_date != 0 and (prev_date + timedelta(minutes=1)).minute != date.minute:
+            print('Missing entry', date)
             #df.loc[i - 0.5] = df.loc[i-1]
             total_seconds = (date - prev_date).total_seconds()
             spaced_entries[i] = int(total_seconds / 60)
@@ -103,9 +152,9 @@ def df_builder(path_to_csv:str):
             #counter += 1
         prev_date = date
         #prev_row = df.iloc[i]
-    #print(len(daily_candle_counter))
+    #print(len(daily_candle_counter))'''
     
-    d = df.to_dict(orient='list')
+    '''d = df.to_dict(orient='list')
     idx_displacement = 0
     for key, value in tqdm(spaced_entries.items()):
         while value != 1:
@@ -114,15 +163,13 @@ def df_builder(path_to_csv:str):
                 list.insert(key + idx_displacement, list[idx])
             daily_candle_counter.insert(idx, 0)
             idx_displacement += 1
-            value -= 1
+            value -= 1'''
     
     #print(len(daily_candle_counter))
-    new_df = pd.DataFrame.from_dict(d)
-    new_df['daily_candle_counter'] = daily_candle_counter
-
-    #print(spaced_entries)
-    #print(counter)
-    return new_df.fillna(0)
+    #new_df = pd.DataFrame.from_dict(d)
+    df['daily_candle_counter'] = daily_candle_counter
+    df = df.fillna(0)
+    df.to_pickle(Path.home() / 'data' / ticker + '_built.pkl')
 
 # Polygon outputs 5000 data points max about 5 days with pre/post data
 def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir=dirname+'/', timestamp:str='minute'):

@@ -1,9 +1,8 @@
+import numpy as np
 from pathlib import Path
 from data_utils import *
 
-path_dir = Path.home() / 'Git' /  'AlphaStonk' / 'utils'
-
-fetch_all_data('UVXY', 1, '2022-08-22', '2023-02-09')
-df = df_builder(path_dir / 'VIX_minute_2022-08-22.csv')
-#filepath = path_dir / 'SPY_minute_2022-08-22_built.pkl'
-#df.to_pickle(filepath)
+#finnhub_data_writer(['OXY'], 928769400)
+#df = finnhub_data_writer(['AAPL'], 928769400)
+#df = df_builder(Path.home() / 'data' / 'AAPL_928769400_1676332664_1_raw.pkl')
+df = df_builder('AAPL', Path.home() / 'data' / 'AAPL_928769400_1676332664_1_raw.pkl')
