@@ -15,7 +15,7 @@ class StockEnv(Env):
     def __init__(self, config: EnvContext):
         '''
         ### Action Space
-        The action is a `ndarray` with shape `(3,)` (short/long/none)
+        The action is a `ndarray` with shape `(1 + 2n,)` (short/long/none) where n is number of tickers
         | Num | Action                 |
         |-----|------------------------|
         | 0   | No position            |
@@ -23,7 +23,7 @@ class StockEnv(Env):
         | 2   | Short position         |
 
         ### Observation Space
-        Slice is a `ndarray` with shape `(390 * window_days,7)` where the elements correspond to the following:
+        Slice is a `ndarray` with shape `(390 * window_days,7n)` where n is the number of tickers and the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | open                                 | 0    | Inf | dollars ($)  |
@@ -34,7 +34,7 @@ class StockEnv(Env):
         | 5   | vwap                                 | 0    | Inf | dollars ($)  | 
         | 6   | transactions                         | 0    | Inf | transactions |
         
-        Vector is a 'ndarray' with shape '(24,)' where the elements correspond to the following:
+        Vector is a 'ndarray' with shape '(5 + 19n,)' where n is the number of tickers and the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | portfolio_value                      | -Inf | Inf | dollars ($)  |
@@ -62,6 +62,7 @@ class StockEnv(Env):
         | 22  | latest_ema_360                       | 0    | Inf | dollars ($)  |
         | 23  | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
+        self.num_tickers = len(config['dfs'])
         self.action_space = Discrete(3)
         # Window width of data slice per step (days)
         self.window_days = 2
