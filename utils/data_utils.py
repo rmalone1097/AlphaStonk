@@ -101,29 +101,44 @@ def append_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str
             writer.writerow(row)
     return path
 
-def df_builder(ticker, pickle_dir):
-    df = pd.read_pickle(pickle_dir)
-    array = df.to_numpy()
-    built_array = np.array([array[0, :]])
+def df_builder(ticker:str, pickle_dir):
+    raw_df = pd.read_pickle(pickle_dir)
+    array = raw_df.to_numpy()
     prev_i = 0
     repeat_max = 30
 
-    for i in tqdm(range(1, array.shape[0])):
-        prev_dt = datetime.fromtimestamp(array[i-1, 5])
-        dt = datetime.fromtimestamp(array[i, 5])
-        delta = dt - prev_dt
-        m_delta = int(delta.total_seconds() / 60)
-        row = np.array([array[i-1, :]])
+    # Splitting into subarrays and concatenating at the end to try to speed up computation time
+    sub_arrays = 20
+    resolution = array.shape[0] / sub_arrays
+    built_array_list = []
+    sub_array_counter = 0
 
-        if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
-            built_array = np.concatenate((built_array, array[prev_i+1 : i]))
-            built_array = np.concatenate((built_array, np.repeat(row, min(m_delta, repeat_max), axis=0)))
-            prev_i = i
+    while sub_array_counter < sub_arrays:
+        sub_array = array[int(resolution*sub_array_counter):int(resolution*(sub_array_counter + 1)), :]
+        built_array = np.array([sub_array[0, :]])
+        prev_i = 0
+
+        for i in tqdm(range(1, sub_array.shape[0]-1)):
+            prev_dt = datetime.fromtimestamp(sub_array[i-1, 5])
+            dt = datetime.fromtimestamp(sub_array[i, 5])
+            delta = dt - prev_dt
+            m_delta = int(delta.total_seconds() / 60)
+            row = np.array([sub_array[i-1, :]])
+
+            if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
+                built_array = np.concatenate((built_array, array[prev_i+1 : i]))
+                built_array = np.concatenate((built_array, np.repeat(row, min(m_delta, repeat_max), axis=0)))
+                prev_i = i
+        sub_array_counter += 1
+
+        built_array_list.append(built_array)
     
-    df = pd.DataFrame(built_array, columns=['close', 'high', 'low', 'open', 'status', 'timestamp', 'volume'])
-    df.to_pickle(Path.home() / 'data' / ticker + '_partialbuilt.pkl')
+    complete_array = np.vstack(built_array_list)
+    print(complete_array)
+    df = pd.DataFrame(complete_array, columns=['close', 'high', 'low', 'open', 'status', 'timestamp', 'volume'])
+    print(df)
 
-    daily_candle_counter = []
+    '''daily_candle_counter = []
     prev_counter = 0
     prev_date = 0
     spaced_entries = dict()
@@ -141,7 +156,7 @@ def df_builder(ticker, pickle_dir):
         daily_candle_counter.append(counter)
         prev_counter = counter
 
-        '''# Look for missing data points and repeat previous data points to make up for it
+        # Look for missing data points and repeat previous data points to make up for it
         # TODO: Read CSV into lists to improve efficiency of appending
         if prev_date != 0 and (prev_date + timedelta(minutes=1)).minute != date.minute:
             print('Missing entry', date)
@@ -167,9 +182,11 @@ def df_builder(ticker, pickle_dir):
     
     #print(len(daily_candle_counter))
     #new_df = pd.DataFrame.from_dict(d)
-    df['daily_candle_counter'] = daily_candle_counter
+    #df['daily_candle_counter'] = daily_candle_counter
     df = df.fillna(0)
-    df.to_pickle(Path.home() / 'data' / ticker + '_built.pkl')
+    df.to_pickle(Path.home() / 'data' / 'AAPL_built.pkl')
+
+    return raw_df, df
 
 # Polygon outputs 5000 data points max about 5 days with pre/post data
 def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir=dirname+'/', timestamp:str='minute'):

@@ -38,11 +38,11 @@ class StockEnv(Env):
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | portfolio_value                      | -Inf | Inf | dollars ($)  |
-        | 1   | energy                               | -Inf | Inf | N/A          |
-        | 2   | position_log                         | 0    | 2   | discrete     |
-        | 3   | action_taken                         | 0    | 2   | discrete     |
-        | 4   | start_price                          | 0    | Inf | dollars ($)  |
-        | 5   | holding_time                         | 0    | Inf | timesteps    |
+        | 1   | position_log                         | 0    | 2   | discrete     |
+        | 2   | action_taken                         | 0    | 2   | discrete     |
+        | 3   | start_price                          | 0    | Inf | dollars ($)  |
+        | 4   | holding_time                         | 0    | Inf | timesteps    |
+        | 5   | latest_energy                        | -Inf | Inf | N/A          |
         | 6   | latest_open                          | 0    | Inf | dollars ($)  |
         | 7   | latest_high                          | 0    | Inf | dollars ($)  |
         | 8   | latest_low                           | 0    | Inf | dollars ($)  |
@@ -62,23 +62,25 @@ class StockEnv(Env):
         | 22  | latest_ema_360                       | 0    | Inf | dollars ($)  |
         | 23  | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
+        # Number of tickers (dfs passed in initialization)
         self.num_tickers = len(config['dfs'])
-        self.action_space = Discrete(3)
+        self.action_space = Discrete(0 + 2*self.num_tickers)
         # Window width of data slice per step (days)
         self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
-            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390,7), dtype=np.float32),
-            'vector': Box(low=np.concatenate((np.full(2, -np.inf, dtype=np.float32), np.zeros(22, dtype=np.float32))), 
-                high=np.concatenate((np.full(2, np.inf, dtype=np.float32),np.array([2, 2], dtype=np.float32), np.full(20, np.inf, dtype=np.float32))))
+            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390, 7*self.num_tickers), dtype=np.float32),
+            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([np.inf], dtype=np.float32), np.zeros(18*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
+                          high=np.concatenate((np.array([-np.inf, 2, 2, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(19, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
         })
-        self.df = config["df"]
-        #Full data tensor (with unused data)
-        self.df_tensor = self.df.to_numpy()
-        # Data tensor (only relevant data)
-        self.data_tensor = self.df_tensor[:, 2:20]
+        self.df_list = config["dfs"]
+        self.tensor_list = []
+        for df in self.df_list:
+            self.tensor_list.append(df.to_numpy())
         # Num data points
-        self.num_data = self.data_tensor.shape[0]
+        self.num_data = self.tensor_list[0].shape[0]
+        for i in range(1, len(self.tensor_list)):
+            assert self.num_data == len(self.tensor_list[i]), "DataFrames input have different sizes"
         # Variable to keep track of initial underlying at start of position
         self.start_price = 1
         # Observed state (data slice)
@@ -307,6 +309,10 @@ class StockEnv(Env):
         end_idx = start_idx + self.window_days * 390
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
+        full_tensor = self.tensor_list[0][start_idx:end_idx, :]
+        for i in range(1, self.num_tickers):
+            tensor_slice = self.tensor_list[i][start_idx:end_idx, :]
+
         df_slice = self.df.iloc[start_idx:end_idx]
         vector_slice = df_slice.loc[:, 'open':'ema_445']
         #print(vector_slice)
