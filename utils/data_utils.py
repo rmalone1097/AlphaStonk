@@ -109,12 +109,13 @@ def df_builder(ticker:str, pickle_dir):
 
     # Splitting into subarrays and concatenating at the end to try to speed up computation time
     sub_arrays = 20
-    resolution = array.shape[0] / sub_arrays
+    resolution = int(array.shape[0] / sub_arrays)
     built_array_list = []
     sub_array_counter = 0
+    #m_counter = []
 
     while sub_array_counter < sub_arrays:
-        sub_array = array[int(resolution*sub_array_counter):int(resolution*(sub_array_counter + 1)), :]
+        sub_array = array[resolution*sub_array_counter:resolution*(sub_array_counter + 1), :]
         built_array = np.array([sub_array[0, :]])
         prev_i = 0
 
@@ -124,21 +125,21 @@ def df_builder(ticker:str, pickle_dir):
             delta = dt - prev_dt
             m_delta = int(delta.total_seconds() / 60)
             row = np.array([sub_array[i-1, :]])
+            #m_counter.append(m_delta)
 
             if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
-                built_array = np.concatenate((built_array, array[prev_i+1 : i]))
+                built_array = np.concatenate((built_array, sub_array[prev_i+1 : i]))
                 built_array = np.concatenate((built_array, np.repeat(row, min(m_delta, repeat_max), axis=0)))
+                #m_counter = m_counter + [m_delta]*min(m_delta*repeat_max)
                 prev_i = i
         sub_array_counter += 1
 
         built_array_list.append(built_array)
     
     complete_array = np.vstack(built_array_list)
-    print(complete_array)
     df = pd.DataFrame(complete_array, columns=['close', 'high', 'low', 'open', 'status', 'timestamp', 'volume'])
-    print(df)
 
-    '''daily_candle_counter = []
+    daily_candle_counter = []
     prev_counter = 0
     prev_date = 0
     spaced_entries = dict()
@@ -156,7 +157,7 @@ def df_builder(ticker:str, pickle_dir):
         daily_candle_counter.append(counter)
         prev_counter = counter
 
-        # Look for missing data points and repeat previous data points to make up for it
+        '''# Look for missing data points and repeat previous data points to make up for it
         # TODO: Read CSV into lists to improve efficiency of appending
         if prev_date != 0 and (prev_date + timedelta(minutes=1)).minute != date.minute:
             print('Missing entry', date)
@@ -182,7 +183,7 @@ def df_builder(ticker:str, pickle_dir):
     
     #print(len(daily_candle_counter))
     #new_df = pd.DataFrame.from_dict(d)
-    #df['daily_candle_counter'] = daily_candle_counter
+    df['daily_candle_counter'] = daily_candle_counter
     df = df.fillna(0)
     df.to_pickle(Path.home() / 'data' / 'AAPL_built.pkl')
 

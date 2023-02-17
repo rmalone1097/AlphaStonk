@@ -111,8 +111,8 @@ class StockEnv(Env):
         self.reward = 0
         # Action
         self.action = 0
-        # Current price
-        self.current_price = 0
+        # Current price list of all tickers
+        self.current_price_list = []
         # Minimum time (in minutes) a position must be held
         self.minimum_holding_time = 0
         # Holding time for a position
@@ -309,20 +309,17 @@ class StockEnv(Env):
         end_idx = start_idx + self.window_days * 390
 
         # The state of the environment is the data slice that the agent will have access to to make a decision
-        full_tensor = self.tensor_list[0][start_idx:end_idx, :]
-        for i in range(1, self.num_tickers):
-            tensor_slice = self.tensor_list[i][start_idx:end_idx, :]
+        slice_tensor_list = []
+        vector_tensor_list = []
+        for i in range(self.num_tickers):
+            slice_tensor_list.append(self.tensor_list[i][start_idx:end_idx, :])
+            vector_tensor_list.append(self.tensor_list[i][end_idx, :])
 
-        df_slice = self.df.iloc[start_idx:end_idx]
-        vector_slice = df_slice.loc[:, 'open':'ema_445']
-        #print(vector_slice)
-        #print(vector_slice.iloc[-1])
-        #print(df_slice)
         #TODO: Transactions is spelled wrong in the df
-        self.state = {'slice': df_slice.loc[:, 'open':'transacitons'].to_numpy(), 
-        'vector': np.concatenate((np.zeros(6, dtype=np.float32), vector_slice.iloc[-1].to_numpy()))}
+        self.state = {'slice': np.vstack(slice_tensor_list), 
+        'vector': np.concatenate((np.zeros(6, dtype=np.float32), np.hstack(vector_tensor_list)))}
         #print(self.state['vector'])
-        self.current_price = self.state['slice'][0, 3]
-        self.start_price = self.current_price
+        self.current_price_list = [tensor[-1, 0] for tensor in slice_tensor_list]
+        self.start_price = self.current_price_list[0]
         self.state_idx = [start_idx, end_idx]
         return self.state
