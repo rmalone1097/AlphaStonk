@@ -36,7 +36,7 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
         df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
 
         while span_stamp < end_stamp:
-            start_stamp = span_stamp
+            start_stamp = span_stamp + 60
             start_datetime = datetime.fromtimestamp(start_stamp)
             span_datetime = start_datetime + timedelta(days=14)
             span_stamp = int(datetime.timestamp(span_datetime))
@@ -157,35 +157,11 @@ def df_builder(ticker:str, pickle_dir):
         daily_candle_counter.append(counter)
         prev_counter = counter
 
-        '''# Look for missing data points and repeat previous data points to make up for it
-        # TODO: Read CSV into lists to improve efficiency of appending
-        if prev_date != 0 and (prev_date + timedelta(minutes=1)).minute != date.minute:
-            print('Missing entry', date)
-            #df.loc[i - 0.5] = df.loc[i-1]
-            total_seconds = (date - prev_date).total_seconds()
-            spaced_entries[i] = int(total_seconds / 60)
-            #daily_candle_counter.append(0)
-            #counter += 1
-        prev_date = date
-        #prev_row = df.iloc[i]
-    #print(len(daily_candle_counter))'''
-    
-    '''d = df.to_dict(orient='list')
-    idx_displacement = 0
-    for key, value in tqdm(spaced_entries.items()):
-        while value != 1:
-            idx = key + idx_displacement - 1
-            for list in d.values():
-                list.insert(key + idx_displacement, list[idx])
-            daily_candle_counter.insert(idx, 0)
-            idx_displacement += 1
-            value -= 1'''
-    
-    #print(len(daily_candle_counter))
-    #new_df = pd.DataFrame.from_dict(d)
     df['daily_candle_counter'] = daily_candle_counter
+    df['datetime'] = df.apply(lambda row: datetime.fromtimestamp(row.timestamp), axis=1)   
+    df = df.set_index('datetime') 
     df = df.fillna(0)
-    df.to_pickle(Path.home() / 'data' / 'AAPL_built.pkl')
+    df.to_pickle(Path.home() / 'data' / 'df_' + ticker + '_built.pkl')
 
     return raw_df, df
 
