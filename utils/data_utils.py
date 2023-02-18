@@ -137,7 +137,7 @@ def df_builder(ticker:str, pickle_dir):
         built_array_list.append(built_array)
     
     complete_array = np.vstack(built_array_list)
-    df = pd.DataFrame(complete_array, columns=['close', 'high', 'low', 'open', 'status', 'timestamp', 'volume'])
+    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', ticker+'_status', ticker+'_timestamp', ticker+'_volume'])
 
     daily_candle_counter = []
     prev_counter = 0
@@ -161,7 +161,9 @@ def df_builder(ticker:str, pickle_dir):
     df['datetime'] = df.apply(lambda row: datetime.fromtimestamp(row.timestamp), axis=1)   
     df = df.set_index('datetime') 
     df = df.fillna(0)
-    df.to_pickle(Path.home() / 'data' / 'df_' + ticker + '_built.pkl')
+
+    file_name = 'df_' + ticker + '_built.pkl'
+    df.to_pickle(Path.home() / 'data' / file_name)
 
     return raw_df, df
 
@@ -193,32 +195,45 @@ def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir
             counter = 0
             str(current_date_obj + timedelta(days=datedelta))
 
-def add_indicators(df):
-    df.set_index(pd.DatetimeIndex(df["time"]), inplace=True)
+def add_indicators(ticker, df):
     trading_df = df.loc[df['daily_candle_counter'] > 0]
 
     # Minute length EMA
-    trading_df['ema_5'] = ta.ema(trading_df['close'], length=5)
-    trading_df['ema_10'] = ta.ema(trading_df['close'], length=10)
-    trading_df['ema_15'] = ta.ema(trading_df['close'], length=15)
-    trading_df['ema_25'] = ta.ema(trading_df['close'], length=25)
-    trading_df['ema_40'] = ta.ema(trading_df['close'], length=40)
-    trading_df['ema_65'] = ta.ema(trading_df['close'], length=65)
-    trading_df['ema_170'] = ta.ema(trading_df['close'], length=170)
-    trading_df['ema_250'] = ta.ema(trading_df['close'], length=250)
-    trading_df['ema_360'] = ta.ema(trading_df['close'], length=360)
-    trading_df['ema_445'] = ta.ema(trading_df['close'], length=445) 
-    trading_df['ema_900'] = ta.ema(trading_df['close'], length=900)
-    trading_df['ema_1000'] = ta.ema(trading_df['close'], length=1000)
+    trading_df[ticker + '_ema_5'] = ta.ema(trading_df['close'], length=5)
+    trading_df[ticker + '_ema_10'] = ta.ema(trading_df['close'], length=10)
+    trading_df[ticker + '_ema_15'] = ta.ema(trading_df['close'], length=15)
+    trading_df[ticker + '_ema_25'] = ta.ema(trading_df['close'], length=25)
+    trading_df[ticker + '_ema_40'] = ta.ema(trading_df['close'], length=40)
+    trading_df[ticker + '_ema_65'] = ta.ema(trading_df['close'], length=65)
+    trading_df[ticker + '_ema_170'] = ta.ema(trading_df['close'], length=170)
+    trading_df[ticker + '_ema_250'] = ta.ema(trading_df['close'], length=250)
+    trading_df[ticker + '_ema_360'] = ta.ema(trading_df['close'], length=360)
+    trading_df[ticker + '_ema_445'] = ta.ema(trading_df['close'], length=445) 
+    trading_df[ticker + '_ema_900'] = ta.ema(trading_df['close'], length=900)
+    trading_df[ticker + '_ema_1000'] = ta.ema(trading_df['close'], length=1000)
 
     #day length ema (5, 10, 20, 50, 100)
-    trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
-    trading_df['ema_10_day'] = ta.ema(trading_df['close'], length=10*390)
-    trading_df['ema_20_day'] = ta.ema(trading_df['close'], length=20*390)
-    trading_df['ema_50_day'] = ta.ema(trading_df['close'], length=50*390)
-    trading_df['ema_100_day'] = ta.ema(trading_df['close'], length=100*390)
+    #trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
+    #trading_df['ema_10_day'] = ta.ema(trading_df['close'], length=10*390)
+    #trading_df['ema_20_day'] = ta.ema(trading_df['close'], length=20*390)
+    #trading_df['ema_50_day'] = ta.ema(trading_df['close'], length=50*390)
+    #trading_df['ema_100_day'] = ta.ema(trading_df['close'], length=100*390)
 
     return trading_df
+
+def prepare_state_df(tickers, data_path):
+    df_list = []
+    for ticker in tickers:
+        file = 'df_' + ticker + '_built.pkl'
+        df = pd.read_pickle(data_path / file)
+        trading_df = add_indicators(ticker, df)
+        trading_df = trading_df.drop(columns=['status', 'timestamp'])
+        trading_df = trading_df.rename(columns={'close':ticker+'_close', 'high':ticker+'_high', 'low':ticker+'_low', 'open':ticker+'_open', 'volume':ticker+'_volume'})
+        df_list.append(trading_df)
+        
+    #trading_df = pd.concat(df_list)
+
+    return df_list[0].fillna(0), df_list[1].fillna(0)
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
