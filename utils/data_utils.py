@@ -105,7 +105,6 @@ def df_builder(ticker:str, pickle_dir):
     raw_df = pd.read_pickle(pickle_dir)
     array = raw_df.to_numpy()
     prev_i = 0
-    repeat_max = 30
 
     # Splitting into subarrays and concatenating at the end to try to speed up computation time
     sub_arrays = 20
@@ -129,7 +128,7 @@ def df_builder(ticker:str, pickle_dir):
 
             if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
                 built_array = np.concatenate((built_array, sub_array[prev_i+1 : i]))
-                built_array = np.concatenate((built_array, np.repeat(row, min(m_delta, repeat_max), axis=0)))
+                built_array = np.concatenate((built_array, np.repeat(row, m_delta+1, axis=0)))
                 #m_counter = m_counter + [m_delta]*min(m_delta*repeat_max)
                 prev_i = i
         sub_array_counter += 1
@@ -137,7 +136,7 @@ def df_builder(ticker:str, pickle_dir):
         built_array_list.append(built_array)
     
     complete_array = np.vstack(built_array_list)
-    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', ticker+'_status', ticker+'_timestamp', ticker+'_volume'])
+    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', ticker+'_status', 'timestamp', ticker+'_volume'])
 
     daily_candle_counter = []
     prev_counter = 0
