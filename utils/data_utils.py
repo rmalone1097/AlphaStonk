@@ -12,7 +12,8 @@ import numpy as np
 import finnhub
 
 from pathlib import Path
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
+import time
 from scipy.interpolate import interp1d
 from typing import cast
 from urllib3 import HTTPResponse
@@ -104,62 +105,59 @@ def append_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str
 def df_builder(ticker:str, pickle_dir):
     raw_df = pd.read_pickle(pickle_dir)
     array = raw_df.to_numpy()
-    prev_i = 0
+    first_found = False
+    daily_arrays = []
+    daily_array = np.array([])
 
-    # Splitting into subarrays and concatenating at the end to try to speed up computation time
-    sub_arrays = 20
-    resolution = int(array.shape[0] / sub_arrays)
-    built_array_list = []
-    sub_array_counter = 0
-    #m_counter = []
+    i = 1
+    while i < array.shape[0] - 2:
+        row = np.array([array[i, :]])
+        prev_row = np.array([array[i-1, :]])
 
-    while sub_array_counter < sub_arrays:
-        sub_array = array[resolution*sub_array_counter:resolution*(sub_array_counter + 1), :]
-        built_array = np.array([sub_array[0, :]])
-        prev_i = 1
+        # Datetime object made from timestamp of current row
+        dt = datetime.datetime.fromtimestamp(array[i, 5], pytz.timezone('US/Eastern'))
+        prev_dt = datetime.datetime.fromtimestamp(array[i-1, 5], pytz.timezone('US/Eastern'))
+        delta = dt - prev_dt
+        m_delta = int(delta.total_seconds() / 60)
 
-        for i in tqdm(range(1, sub_array.shape[0]-1)):
-            prev_dt = datetime.fromtimestamp(sub_array[i-1, 5])
-            dt = datetime.fromtimestamp(sub_array[i, 5])
-            delta = dt - prev_dt
-            m_delta = int(delta.total_seconds() / 60)
-            row = np.array([sub_array[i-1, :]])
-            #m_counter.append(m_delta)
+        # Check for first dp in trading day. If no 9:30 dp, starting dp will be dp prior to the first one in trading day
+        if first_found == False:
+            if dt.time() == datetime.time(9, 30):
+                first_found = True
+                daily_array = row
+                i += 1
 
-            if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
-                built_array = np.concatenate((built_array, sub_array[prev_i+1 : i]))
-                built_array = np.concatenate((built_array, np.repeat(row, m_delta, axis=0)))
-                #m_counter = m_counter + [m_delta]*min(m_delta*repeat_max)
-                prev_i = i
-        sub_array_counter += 1
+            elif dt.time() > datetime.time(9, 30) and dt.time() < datetime.time(15, 59):
+                first_found = True
+                daily_array = np.repeat(prev_row, m_delta, axis=0)
+        
+        elif first_found == True:
+            # Check for last dp
+            if dt.time() == datetime.time(15, 59):
+                daily_array = np.concatenate((daily_array, array[i-1:i+1, :]), axis=0)
+                daily_arrays.append(daily_array)
+                daily_array = np.array([[]])
+                first_found = False
 
-        built_array_list.append(built_array)
-    
-    complete_array = np.vstack(built_array_list)
-    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', 'status', 'timestamp', ticker+'_volume'])
-    print(df)
-
-    daily_candle_counter = []
-    prev_counter = 0
-    prev_date = 0
-    spaced_entries = dict()
-    for i, row in tqdm(enumerate(df.itertuples(index=False)), total=len(df)):
-        counter = 0
-        date = datetime.fromtimestamp(int(row.timestamp), pytz.timezone('US/Eastern'))
-        # Make daily candle counter during trading hours
-        if prev_counter != 0:
-            if date.hour == 16 and date.minute == 0:
-                counter = 0
+            elif dt.time() > datetime.time(15, 59):
+                delta = prev_dt.replace(hour=15, minute=59) - prev_dt
+                m_delta = int(delta.total_seconds() / 60)
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
+                daily_arrays.append(daily_array)
+                daily_array = []
+                first_found = False
+            
             else:
-                counter = prev_counter + 1
-        elif date.hour == 9 and date.minute == 30:
-            counter = 1
-        daily_candle_counter.append(counter)
-        prev_counter = counter
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
 
-    df['daily_candle_counter'] = daily_candle_counter
-    df['datetime'] = df.apply(lambda row: datetime.fromtimestamp(row.timestamp), axis=1)
-    raw_df['dt'] = raw_df.apply(lambda row: datetime.fromtimestamp(row.t), axis=1)   
+        i += 1
+        
+    complete_array = np.vstack(daily_arrays)
+    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', 'status', 'timestamp', ticker+'_volume'])
+
+    #df['daily_candle_counter'] = daily_candle_counter
+    df['datetime'] = df.apply(lambda row: datetime.datetime.fromtimestamp(row.timestamp), axis=1)
+    raw_df['dt'] = raw_df.apply(lambda row: datetime.datetime.fromtimestamp(row.t), axis=1)   
     df = df.set_index('datetime') 
     df = df.fillna(0)
 
