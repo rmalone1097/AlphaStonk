@@ -116,7 +116,7 @@ def df_builder(ticker:str, pickle_dir):
     while sub_array_counter < sub_arrays:
         sub_array = array[resolution*sub_array_counter:resolution*(sub_array_counter + 1), :]
         built_array = np.array([sub_array[0, :]])
-        prev_i = 0
+        prev_i = 1
 
         for i in tqdm(range(1, sub_array.shape[0]-1)):
             prev_dt = datetime.fromtimestamp(sub_array[i-1, 5])
@@ -128,7 +128,7 @@ def df_builder(ticker:str, pickle_dir):
 
             if m_delta > 1 and dt.hour >= 7 and dt.hour <= 14:
                 built_array = np.concatenate((built_array, sub_array[prev_i+1 : i]))
-                built_array = np.concatenate((built_array, np.repeat(row, m_delta+1, axis=0)))
+                built_array = np.concatenate((built_array, np.repeat(row, m_delta, axis=0)))
                 #m_counter = m_counter + [m_delta]*min(m_delta*repeat_max)
                 prev_i = i
         sub_array_counter += 1
@@ -136,7 +136,8 @@ def df_builder(ticker:str, pickle_dir):
         built_array_list.append(built_array)
     
     complete_array = np.vstack(built_array_list)
-    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', ticker+'_status', 'timestamp', ticker+'_volume'])
+    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', 'status', 'timestamp', ticker+'_volume'])
+    print(df)
 
     daily_candle_counter = []
     prev_counter = 0
@@ -157,7 +158,8 @@ def df_builder(ticker:str, pickle_dir):
         prev_counter = counter
 
     df['daily_candle_counter'] = daily_candle_counter
-    df['datetime'] = df.apply(lambda row: datetime.fromtimestamp(row.timestamp), axis=1)   
+    df['datetime'] = df.apply(lambda row: datetime.fromtimestamp(row.timestamp), axis=1)
+    raw_df['dt'] = raw_df.apply(lambda row: datetime.fromtimestamp(row.t), axis=1)   
     df = df.set_index('datetime') 
     df = df.fillna(0)
 
@@ -198,18 +200,18 @@ def add_indicators(ticker, df):
     trading_df = df.loc[df['daily_candle_counter'] > 0]
 
     # Minute length EMA
-    trading_df[ticker + '_ema_5'] = ta.ema(trading_df['close'], length=5)
-    trading_df[ticker + '_ema_10'] = ta.ema(trading_df['close'], length=10)
-    trading_df[ticker + '_ema_15'] = ta.ema(trading_df['close'], length=15)
-    trading_df[ticker + '_ema_25'] = ta.ema(trading_df['close'], length=25)
-    trading_df[ticker + '_ema_40'] = ta.ema(trading_df['close'], length=40)
-    trading_df[ticker + '_ema_65'] = ta.ema(trading_df['close'], length=65)
-    trading_df[ticker + '_ema_170'] = ta.ema(trading_df['close'], length=170)
-    trading_df[ticker + '_ema_250'] = ta.ema(trading_df['close'], length=250)
-    trading_df[ticker + '_ema_360'] = ta.ema(trading_df['close'], length=360)
-    trading_df[ticker + '_ema_445'] = ta.ema(trading_df['close'], length=445) 
-    trading_df[ticker + '_ema_900'] = ta.ema(trading_df['close'], length=900)
-    trading_df[ticker + '_ema_1000'] = ta.ema(trading_df['close'], length=1000)
+    trading_df[ticker + '_ema_5'] = ta.ema(trading_df[ticker + '_close'], length=5)
+    trading_df[ticker + '_ema_10'] = ta.ema(trading_df[ticker + '_close'], length=10)
+    trading_df[ticker + '_ema_15'] = ta.ema(trading_df[ticker + '_close'], length=15)
+    trading_df[ticker + '_ema_25'] = ta.ema(trading_df[ticker + '_close'], length=25)
+    trading_df[ticker + '_ema_40'] = ta.ema(trading_df[ticker + '_close'], length=40)
+    trading_df[ticker + '_ema_65'] = ta.ema(trading_df[ticker + '_close'], length=65)
+    trading_df[ticker + '_ema_170'] = ta.ema(trading_df[ticker + '_close'], length=170)
+    trading_df[ticker + '_ema_250'] = ta.ema(trading_df[ticker + '_close'], length=250)
+    trading_df[ticker + '_ema_360'] = ta.ema(trading_df[ticker + '_close'], length=360)
+    trading_df[ticker + '_ema_445'] = ta.ema(trading_df[ticker + '_close'], length=445) 
+    trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
+    trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
 
     #day length ema (5, 10, 20, 50, 100)
     #trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
@@ -232,7 +234,7 @@ def prepare_state_df(tickers, data_path):
         
     #trading_df = pd.concat(df_list)
 
-    return df_list[0].fillna(0), df_list[1].fillna(0)
+    return df_list[0].fillna(0)
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
