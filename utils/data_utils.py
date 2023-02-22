@@ -30,17 +30,17 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
 
     for ticker in tickers:
         # Go two weeks at a time to get all data
-        start_datetime = datetime.fromtimestamp(original_start_stamp)
+        start_datetime = datetime.datetime.fromtimestamp(original_start_stamp)
         span_datetime = start_datetime + timedelta(days=14)
-        span_stamp = int(datetime.timestamp(span_datetime))
+        span_stamp = int(datetime.datetime.timestamp(span_datetime))
         print(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
         df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
 
         while span_stamp < end_stamp:
             start_stamp = span_stamp + 60
-            start_datetime = datetime.fromtimestamp(start_stamp)
+            start_datetime = datetime.datetime.fromtimestamp(start_stamp)
             span_datetime = start_datetime + timedelta(days=14)
-            span_stamp = int(datetime.timestamp(span_datetime))
+            span_stamp = int(datetime.datetime.timestamp(span_datetime))
             new_df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), start_stamp, span_stamp))
             df = pd.concat([df, new_df])
             print(span_datetime)
@@ -128,6 +128,8 @@ def df_builder(ticker:str, pickle_dir):
                 i += 1
 
             elif dt.time() > datetime.time(9, 30) and dt.time() < datetime.time(15, 59):
+                delta = dt - dt.replace(hour=9, minute=30)
+                m_delta = int(delta.total_seconds() / 60)
                 first_found = True
                 daily_array = np.repeat(prev_row, m_delta, axis=0)
         
