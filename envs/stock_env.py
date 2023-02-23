@@ -26,13 +26,11 @@ class StockEnv(Env):
         Slice is a `ndarray` with shape `(390 * window_days,7n)` where n is the number of tickers and the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
-        | 0   | open                                 | 0    | Inf | dollars ($)  |
+        | 0   | close                                | 0    | Inf | dollars ($)  |
         | 1   | high                                 | 0    | Inf | dollars ($)  |
         | 2   | low                                  | 0    | Inf | dollars ($)  |
-        | 3   | close                                | 0    | Inf | dollars ($)  |
+        | 3   | open                                 | 0    | Inf | dollars ($)  |
         | 4   | volume                               | 0    | Inf | shares       |
-        | 5   | vwap                                 | 0    | Inf | dollars ($)  | 
-        | 6   | transactions                         | 0    | Inf | transactions |
         
         Vector is a 'ndarray' with shape '(5 + 19n,)' where n is the number of tickers and the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
@@ -43,44 +41,37 @@ class StockEnv(Env):
         | 3   | start_price                          | 0    | Inf | dollars ($)  |
         | 4   | holding_time                         | 0    | Inf | timesteps    |
         | 5   | latest_energy                        | -Inf | Inf | N/A          |
-        | 6   | latest_open                          | 0    | Inf | dollars ($)  |
+        | 6   | latest_close                         | 0    | Inf | dollars ($)  |
         | 7   | latest_high                          | 0    | Inf | dollars ($)  |
         | 8   | latest_low                           | 0    | Inf | dollars ($)  |
-        | 9   | latest_close                         | 0    | Inf | dollars ($)  |
+        | 9   | latest_open                          | 0    | Inf | dollars ($)  |
         | 10  | latest_volume                        | 0    | Inf | shares       |
-        | 11  | latest_vwap                          | 0    | Inf | dollars ($)  | 
-        | 12  | latest_transactions                  | 0    | Inf | transactions |
-        | 13  | latest_daily candle counter          | 0    | Inf | candles      |
-        | 14  | latest_ema_5                         | 0    | Inf | dollars ($)  |
-        | 15  | latest_ema_10                        | 0    | Inf | dollars ($)  |
-        | 16  | latest_ema_15                        | 0    | Inf | dollars ($)  |
-        | 17  | latest_ema_25                        | 0    | Inf | dollars ($)  |
-        | 18  | latest_ema_40                        | 0    | Inf | dollars ($)  |
-        | 19  | latest_ema_65                        | 0    | Inf | dollars ($)  |
-        | 20  | latest_ema_170                       | 0    | Inf | dollars ($)  |
-        | 21  | latest_ema_250                       | 0    | Inf | dollars ($)  |
-        | 22  | latest_ema_360                       | 0    | Inf | dollars ($)  |
-        | 23  | latest_ema_445                       | 0    | Inf | dollars ($)  |
+        | 11  | latest_ema_5                         | 0    | Inf | dollars ($)  |
+        | 12  | latest_ema_10                        | 0    | Inf | dollars ($)  |
+        | 13  | latest_ema_15                        | 0    | Inf | dollars ($)  |
+        | 14  | latest_ema_25                        | 0    | Inf | dollars ($)  |
+        | 15  | latest_ema_40                        | 0    | Inf | dollars ($)  |
+        | 16  | latest_ema_65                        | 0    | Inf | dollars ($)  |
+        | 17  | latest_ema_170                       | 0    | Inf | dollars ($)  |
+        | 18  | latest_ema_250                       | 0    | Inf | dollars ($)  |
+        | 19  | latest_ema_360                       | 0    | Inf | dollars ($)  |
+        | 20  | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
         # Number of tickers (dfs passed in initialization)
-        self.num_tickers = len(config['dfs'])
+        self.num_tickers = config['num_tickers']
+        self.df = config['df']
         self.action_space = Discrete(0 + 2*self.num_tickers)
         # Window width of data slice per step (days)
         self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
-            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390, 7*self.num_tickers), dtype=np.float32),
-            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([np.inf], dtype=np.float32), np.zeros(18*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
-                          high=np.concatenate((np.array([-np.inf, 2, 2, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(19, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
+            'slice': Box(low=0, high=np.inf, shape=(self.window_days*390, 5*self.num_tickers), dtype=np.float32),
+            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(18*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
+                          high=np.concatenate((np.array([np.inf, 2, 2, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(15, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
         })
-        self.df_list = config["dfs"]
-        self.tensor_list = []
-        for df in self.df_list:
-            self.tensor_list.append(df.to_numpy())
+        self.data_tensor = self.df.to_numpy()
         # Num data points
-        self.num_data = self.tensor_list[0].shape[0]
-        for i in range(1, len(self.tensor_list)):
-            assert self.num_data == len(self.tensor_list[i]), "DataFrames input have different sizes"
+        self.num_data = self.data_tensor.shape[0]
         # Variable to keep track of initial underlying at start of position
         self.start_price = 1
         # Observed state (data slice)
@@ -170,8 +161,8 @@ class StockEnv(Env):
 
         full_slice = self.data_tensor[first_idx:last_idx, :]
         assert full_slice.shape[0] == last_idx - first_idx, "Full Slice is failing"
-        self.state['slice'] = full_slice[:, 0:7]
-        self.current_price = self.state['slice'][-1, 3]
+        self.state['slice'] = full_slice
+        self.current_price_list = [self.state['slice'][-1, 5*i] for i in range(self.num_tickers)]
 
         # Worth of position, calculated as percentage change
         if self.position_log == 1:
