@@ -101,7 +101,7 @@ def append_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str
             row = [time, agg.timestamp, agg.open, agg.high, agg.low, agg.close, agg.volume, agg.vwap, agg.transactions]
             writer.writerow(row)
     return path
-    
+
 # Polygon outputs 5000 data points max about 5 days with pre/post data
 def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir=dirname+'/', timestamp:str='minute'):
     firstfetch = True
@@ -231,8 +231,33 @@ def prepare_state_df(tickers, data_path):
         trading_df = trading_df.drop(columns=['status', 'timestamp'])
         trading_df = trading_df.rename(columns={'close':ticker+'_close', 'high':ticker+'_high', 'low':ticker+'_low', 'open':ticker+'_open', 'volume':ticker+'_volume'})
         df_list.append(trading_df)
+
+    df = pd.concat(df_list)
+
+    daily_candle_counter = []
+    energies = []
+    prev_counter = 0
+    prev_date = 0
+    spaced_entries = dict()
+    for i, row in tqdm(enumerate(df.itertuples(index=False)), total=len(df)):
+        energy = (row.ema_25 - row.ema_170) / row.ema_170 * 100
+        energies.append(energy)
+
+        counter = 0
+        date = row.name
+        # Make daily candle counter during trading hours
+        if prev_counter != 0:
+            if date.hour == 16 and date.minute == 0:
+                counter = 0
+            else:
+                counter = prev_counter + 1
+        elif date.hour == 9 and date.minute == 30:
+            counter = 1
+        daily_candle_counter.append(counter)
+        prev_counter = counter
         
-    #trading_df = pd.concat(df_list)
+    df = df.insert(0, 'daily_candle_counter', daily_candle_counter)
+    df = df.insert(1, 'energy', energies)
 
     return df_list[0].fillna(0)
 
