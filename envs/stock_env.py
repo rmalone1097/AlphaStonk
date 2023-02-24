@@ -14,16 +14,40 @@ random.seed(10)
 class StockEnv(Env):
     def __init__(self, config: EnvContext):
         '''
+        ### Input
+        The input is a `dataframe` with shape `(candles,1 + 16n)` where n is the number of tickers and the elmeents correspond to the following:
+        | Num | Observation                          | Min  | Max | Unit         |
+        |-----|--------------------------------------|------|-----|--------------|
+        | 0   | daily_candle_counter                 | 0    | 390 | candles      |
+
+        | 1n  | energy                               | -Inf | Inf | N/A          |
+        | 2n  | close                                | 0    | Inf | dollars ($)  |
+        | 3n  | high                                 | 0    | Inf | dollars ($)  |
+        | 4n  | low                                  | 0    | Inf | dollars ($)  |
+        | 5n  | open                                 | 0    | Inf | dollars ($)  |
+        | 6n  | volume                               | 0    | Inf | shares       |
+        | 7n  | ema_5                                | 0    | Inf | dollars ($)  |
+        | 8n  | ema_10                               | 0    | Inf | dollars ($)  |
+        | 9n  | ema_15                               | 0    | Inf | dollars ($)  |
+        | 10n | ema_25                               | 0    | Inf | dollars ($)  |
+        | 11n | ema_40                               | 0    | Inf | dollars ($)  |
+        | 12n | ema_65                               | 0    | Inf | dollars ($)  |
+        | 13n | ema_170                              | 0    | Inf | dollars ($)  |
+        | 14n | ema_250                              | 0    | Inf | dollars ($)  |
+        | 15n | ema_360                              | 0    | Inf | dollars ($)  |
+        | 16n | ema_445                              | 0    | Inf | dollars ($)  |
+
         ### Action Space
         The action is a `ndarray` with shape `(1 + 2n,)` (short/long/none) where n is number of tickers
         | Num | Action                 |
         |-----|------------------------|
         | 0   | No position            |
-        | 1   | Long position          |
-        | 2   | Short position         |
+
+        | 1n  | Long position          |
+        | 2n  | Short position         |
 
         ### Observation Space
-        Slice is a `ndarray` with shape `(390 * window_days,7n)` where n is the number of tickers and the elements correspond to the following:
+        Slice is a `ndarray` with shape `(390 * window_days,5n)` where n is the number of tickers and the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | close                                | 0    | Inf | dollars ($)  |
@@ -32,7 +56,7 @@ class StockEnv(Env):
         | 3   | open                                 | 0    | Inf | dollars ($)  |
         | 4   | volume                               | 0    | Inf | shares       |
         
-        Vector is a 'ndarray' with shape '(5 + 19n,)' where n is the number of tickers and the elements correspond to the following:
+        Vector is a 'ndarray' with shape '(6 + 16n,)' where n is the number of tickers and the elements correspond to the following:
         | Num | Observation                          | Min  | Max | Unit         |
         |-----|--------------------------------------|------|-----|--------------|
         | 0   | portfolio_value                      | -Inf | Inf | dollars ($)  |
@@ -40,39 +64,44 @@ class StockEnv(Env):
         | 2   | action_taken                         | 0    | 2   | discrete     |
         | 3   | start_price                          | 0    | Inf | dollars ($)  |
         | 4   | holding_time                         | 0    | Inf | timesteps    |
-        | 5   | latest_energy                        | -Inf | Inf | N/A          |
-        | 6   | latest_close                         | 0    | Inf | dollars ($)  |
-        | 7   | latest_high                          | 0    | Inf | dollars ($)  |
-        | 8   | latest_low                           | 0    | Inf | dollars ($)  |
-        | 9   | latest_open                          | 0    | Inf | dollars ($)  |
-        | 10  | latest_volume                        | 0    | Inf | shares       |
-        | 11  | latest_candle_counter                | 0    | Inf | candles      |
-        | 12  | latest_ema_5                         | 0    | Inf | dollars ($)  |
-        | 13  | latest_ema_10                        | 0    | Inf | dollars ($)  |
-        | 14  | latest_ema_15                        | 0    | Inf | dollars ($)  |
-        | 15  | latest_ema_25                        | 0    | Inf | dollars ($)  |
-        | 16  | latest_ema_40                        | 0    | Inf | dollars ($)  |
-        | 17  | latest_ema_65                        | 0    | Inf | dollars ($)  |
-        | 18  | latest_ema_170                       | 0    | Inf | dollars ($)  |
-        | 19  | latest_ema_250                       | 0    | Inf | dollars ($)  |
-        | 20  | latest_ema_360                       | 0    | Inf | dollars ($)  |
-        | 21  | latest_ema_445                       | 0    | Inf | dollars ($)  |
+        | 5   | latest_candle_counter                | 0    | Inf | candles      |
+
+        | 6n  | latest_energy                        | -Inf | Inf | N/A          |
+        | 7n  | latest_close                         | 0    | Inf | dollars ($)  |
+        | 8n  | latest_high                          | 0    | Inf | dollars ($)  |
+        | 9n  | latest_low                           | 0    | Inf | dollars ($)  |
+        | 10n | latest_open                          | 0    | Inf | dollars ($)  |
+        | 11n | latest_volume                        | 0    | Inf | shares       |
+        | 12n | latest_ema_5                         | 0    | Inf | dollars ($)  |
+        | 13n | latest_ema_10                        | 0    | Inf | dollars ($)  |
+        | 14n | latest_ema_15                        | 0    | Inf | dollars ($)  |
+        | 15n | latest_ema_25                        | 0    | Inf | dollars ($)  |
+        | 16n | latest_ema_40                        | 0    | Inf | dollars ($)  |
+        | 17n | latest_ema_65                        | 0    | Inf | dollars ($)  |
+        | 18n | latest_ema_170                       | 0    | Inf | dollars ($)  |
+        | 19n | latest_ema_250                       | 0    | Inf | dollars ($)  |
+        | 20n | latest_ema_360                       | 0    | Inf | dollars ($)  |
+        | 21n | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
         # Number of tickers (dfs passed in initialization)
         self.num_tickers = config['num_tickers']
-        self.df = config['df']
+        # Full df input
+        self.full_df = config['df']
+        # Obs df is only columns used in state slice
+        self.obs_df = self.full_df.loc[:, 'close':'ema_5']
         self.action_space = Discrete(0 + 2*self.num_tickers)
         # Window width of data slice per step (days)
         self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390, 5*self.num_tickers), dtype=np.float32),
-            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(16*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
-                          high=np.concatenate((np.array([np.inf, 2, 2, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(17, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
+            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(15*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
+                          high=np.concatenate((np.array([np.inf, 2, 2, np.inf, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(16, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
         })
-        self.data_tensor = self.df.to_numpy()
+        self.full_df_tensor = self.full_df.to_numpy()
+        self.obs_df_tensor = self.obs_df.to_numpy()
         # Num data points
-        self.num_data = self.data_tensor.shape[0]
+        self.num_data = self.full_df_tensor.shape[0]
         # Variable to keep track of initial underlying at start of position
         self.start_price = 1
         # Observed state (data slice)
@@ -103,8 +132,7 @@ class StockEnv(Env):
         self.reward = 0
         # Action
         self.action = 0
-        # Current price list of all tickers
-        self.current_price_list = []
+        # Current price list of ticker position is in
         self.current_price = 0
         # Minimum time (in minutes) a position must be held
         self.minimum_holding_time = 0
@@ -136,8 +164,6 @@ class StockEnv(Env):
         self.average_long_roi = 0
         # Average ROI for short positions
         self.average_short_roi = 0
-        # Energy (5-15 EMA cloud difference) used for reward
-        self.energy = 0
         # Episode length. Should be rollout length (for algos with rollout) * some scalar
         self.ep_timesteps = 2048 * 5
         # Tracks net worth to put in vector (Markov property?)
@@ -161,11 +187,14 @@ class StockEnv(Env):
         while self.data_tensor[last_idx, 7] == 0:
             first_idx, last_idx = first_idx + 1, last_idx + 1'''
 
-        full_slice = self.data_tensor[first_idx:last_idx, :]
+        full_slice = self.full_df_tensor[first_idx:last_idx, :]
         assert full_slice.shape[0] == last_idx - first_idx, "Full Slice is failing"
-        self.state['slice'] = full_slice
-        self.current_price_list = [self.state['slice'][-1, 5*i] for i in range(self.num_tickers)]
-        self.current_price = self.current_price_list[math.floor(self.position_log / 2)]
+
+        self.state['slice'] = self.obs_df_tensor[first_idx:last_idx, :]
+
+        # Ticker number starting at 0
+        self.ticker_number = math.floor((self.position_log - 1) / 2)
+        self.current_price = self.state['slice'][-1, 5*(self.ticker_number + 1)]
 
         # Worth of position, calculated as percentage change
         if self.position_log == 0:
@@ -177,14 +206,13 @@ class StockEnv(Env):
         
         # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
         latest_close = self.current_price
-        latest_daily_candle = full_slice[-1, 7]
-        latest_ema_25 = full_slice[-1, 11]
-        latest_ema_170 = full_slice[-1, 14]
-        self.energy = (latest_ema_25 - latest_ema_170) / latest_ema_170 * 100
-
+        latest_daily_candle = full_slice[-1, 0]
+        latest_energy = full_slice[-1, 6*(self.ticker_number + 1)]
+        latest_ema_25 = full_slice[-1, 15*(self.ticker_number + 1)]
+        
         # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
         if latest_daily_candle > 120 or latest_daily_candle == 1:
-            reward = self.energy + ((latest_close - latest_ema_25) / latest_ema_25 * 250)
+            reward = latest_energy + ((latest_close - latest_ema_25) / latest_ema_25 * 250)
         else:
             reward = (latest_close - latest_ema_25) / latest_ema_25 * 250
         
@@ -201,7 +229,7 @@ class StockEnv(Env):
         
         self.portfolio += self.transaction_value * position_value
 
-        vector = np.array([self.portfolio, self.energy, self.position_log, action, self.start_price, self.holding_time])
+        vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
 
@@ -302,18 +330,10 @@ class StockEnv(Env):
         start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390 - 1)
         end_idx = start_idx + self.window_days * 390
 
-        # The state of the environment is the data slice that the agent will have access to to make a decision
-        slice_tensor_list = []
-        vector_tensor_list = []
-        for i in range(self.num_tickers):
-            slice_tensor_list.append(self.tensor_list[i][start_idx:end_idx, :])
-            vector_tensor_list.append(self.tensor_list[i][end_idx, :])
-
         #TODO: Transactions is spelled wrong in the df
-        self.state = {'slice': np.vstack(slice_tensor_list), 
-        'vector': np.concatenate((np.zeros(6, dtype=np.float32), np.hstack(vector_tensor_list)))}
+        self.state = {'slice': self.obs_df_tensor[start_idx:end_idx, :], 
+                      'vector': np.zeros(6 + 16*self.num_tickers, dtype=np.float32)}
         #print(self.state['vector'])
-        self.current_price_list = [tensor[-1, 0] for tensor in slice_tensor_list]
-        self.start_price = self.current_price_list[0]
+        self.start_price = self.state['slice'][-1, 0]
         self.state_idx = [start_idx, end_idx]
         return self.state
