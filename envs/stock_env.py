@@ -46,16 +46,17 @@ class StockEnv(Env):
         | 8   | latest_low                           | 0    | Inf | dollars ($)  |
         | 9   | latest_open                          | 0    | Inf | dollars ($)  |
         | 10  | latest_volume                        | 0    | Inf | shares       |
-        | 11  | latest_ema_5                         | 0    | Inf | dollars ($)  |
-        | 12  | latest_ema_10                        | 0    | Inf | dollars ($)  |
-        | 13  | latest_ema_15                        | 0    | Inf | dollars ($)  |
-        | 14  | latest_ema_25                        | 0    | Inf | dollars ($)  |
-        | 15  | latest_ema_40                        | 0    | Inf | dollars ($)  |
-        | 16  | latest_ema_65                        | 0    | Inf | dollars ($)  |
-        | 17  | latest_ema_170                       | 0    | Inf | dollars ($)  |
-        | 18  | latest_ema_250                       | 0    | Inf | dollars ($)  |
-        | 19  | latest_ema_360                       | 0    | Inf | dollars ($)  |
-        | 20  | latest_ema_445                       | 0    | Inf | dollars ($)  |
+        | 11  | latest_candle_counter                | 0    | Inf | candles      |
+        | 12  | latest_ema_5                         | 0    | Inf | dollars ($)  |
+        | 13  | latest_ema_10                        | 0    | Inf | dollars ($)  |
+        | 14  | latest_ema_15                        | 0    | Inf | dollars ($)  |
+        | 15  | latest_ema_25                        | 0    | Inf | dollars ($)  |
+        | 16  | latest_ema_40                        | 0    | Inf | dollars ($)  |
+        | 17  | latest_ema_65                        | 0    | Inf | dollars ($)  |
+        | 18  | latest_ema_170                       | 0    | Inf | dollars ($)  |
+        | 19  | latest_ema_250                       | 0    | Inf | dollars ($)  |
+        | 20  | latest_ema_360                       | 0    | Inf | dollars ($)  |
+        | 21  | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
         # Number of tickers (dfs passed in initialization)
         self.num_tickers = config['num_tickers']
@@ -104,6 +105,7 @@ class StockEnv(Env):
         self.action = 0
         # Current price list of all tickers
         self.current_price_list = []
+        self.current_price = 0
         # Minimum time (in minutes) a position must be held
         self.minimum_holding_time = 0
         # Holding time for a position
@@ -163,14 +165,15 @@ class StockEnv(Env):
         assert full_slice.shape[0] == last_idx - first_idx, "Full Slice is failing"
         self.state['slice'] = full_slice
         self.current_price_list = [self.state['slice'][-1, 5*i] for i in range(self.num_tickers)]
+        self.current_price = self.current_price_list[math.floor(self.position_log / 2)]
 
         # Worth of position, calculated as percentage change
-        if self.position_log == 1:
-            position_value = (self.current_price - self.start_price) / self.start_price * 100
-        elif self.position_log == 2:
-            position_value = (self.start_price - self.current_price) / self.start_price * 100
-        else:
+        if self.position_log == 0:
             position_value = 0
+        elif self.position_log % 2 == 1:
+            position_value = (self.current_price - self.start_price) / self.start_price * 100
+        elif self.position_log % 2 == 2:
+            position_value = (self.start_price - self.current_price) / self.start_price * 100
         
         # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
         latest_close = self.current_price
