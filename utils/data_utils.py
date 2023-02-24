@@ -152,8 +152,8 @@ def df_builder(ticker:str, pickle_dir):
         if first_found == False:
             if dt.time() == datetime.time(9, 30):
                 first_found = True
-                daily_array = row
-                i += 1
+                daily_array = np.array([])
+                #i += 1
 
             elif dt.time() > datetime.time(9, 30) and dt.time() < datetime.time(15, 59):
                 delta = dt - dt.replace(hour=9, minute=30)
@@ -178,7 +178,10 @@ def df_builder(ticker:str, pickle_dir):
                 first_found = False
             
             else:
-                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
+                if daily_array.size == 0:
+                    daily_array = np.repeat(prev_row, m_delta, axis=0)
+                else:
+                    daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
 
         i += 1
         
@@ -239,12 +242,12 @@ def prepare_state_df(tickers, data_path):
     prev_counter = 0
     prev_date = 0
     spaced_entries = dict()
-    for i, row in tqdm(enumerate(df.itertuples(index=False)), total=len(df)):
+    for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
         energy = (row.ema_25 - row.ema_170) / row.ema_170 * 100
         energies.append(energy)
 
         counter = 0
-        date = row.name
+        date = row.Index
         # Make daily candle counter during trading hours
         if prev_counter != 0:
             if date.hour == 16 and date.minute == 0:
