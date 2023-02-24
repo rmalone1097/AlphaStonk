@@ -67,8 +67,8 @@ class StockEnv(Env):
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390, 5*self.num_tickers), dtype=np.float32),
-            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(18*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
-                          high=np.concatenate((np.array([np.inf, 2, 2, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(15, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
+            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(16*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
+                          high=np.concatenate((np.array([np.inf, 2, 2, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(17, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
         })
         self.data_tensor = self.df.to_numpy()
         # Num data points
