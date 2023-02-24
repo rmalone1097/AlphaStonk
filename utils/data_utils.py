@@ -101,6 +101,34 @@ def append_data_to_file(ticker:str, multiplier:int, start_date:str, end_date:str
             row = [time, agg.timestamp, agg.open, agg.high, agg.low, agg.close, agg.volume, agg.vwap, agg.transactions]
             writer.writerow(row)
     return path
+    
+# Polygon outputs 5000 data points max about 5 days with pre/post data
+def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir=dirname+'/', timestamp:str='minute'):
+    firstfetch = True
+    counter = 0
+    start_date_obj = date(year=int(start_date[0:4]), month=int(start_date[5:7]), day=int(start_date[8:10]))
+    end_date_obj   = date(year=int(end_date[0:4]), month=int(end_date[5:7]),  day=int(end_date[8:10]))
+
+    current_date_obj = start_date_obj
+
+    while current_date_obj < end_date_obj:
+        datedelta = (end_date_obj - start_date_obj).days
+        if datedelta > 5:
+            datedelta = 5
+        
+        if firstfetch:
+            path = write_data_to_new_file(ticker, multiplier, str(current_date_obj), str(current_date_obj + timedelta(days=datedelta)), dir)
+        else:
+            append_data_to_file(ticker, multiplier, str(current_date_obj), str(current_date_obj + timedelta(days=datedelta)), path)
+
+        current_date_obj += timedelta(days=datedelta+1)
+        firstfetch = False
+        counter += 1 
+
+        if counter == 5:
+            time.sleep(60)
+            counter = 0
+            str(current_date_obj + timedelta(days=datedelta))
 
 def df_builder(ticker:str, pickle_dir):
     raw_df = pd.read_pickle(pickle_dir)
@@ -167,34 +195,6 @@ def df_builder(ticker:str, pickle_dir):
     df.to_pickle(Path.home() / 'data' / file_name)
 
     return raw_df, df
-
-# Polygon outputs 5000 data points max about 5 days with pre/post data
-def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir=dirname+'/', timestamp:str='minute'):
-    firstfetch = True
-    counter = 0
-    start_date_obj = date(year=int(start_date[0:4]), month=int(start_date[5:7]), day=int(start_date[8:10]))
-    end_date_obj   = date(year=int(end_date[0:4]), month=int(end_date[5:7]),  day=int(end_date[8:10]))
-
-    current_date_obj = start_date_obj
-
-    while current_date_obj < end_date_obj:
-        datedelta = (end_date_obj - start_date_obj).days
-        if datedelta > 5:
-            datedelta = 5
-        
-        if firstfetch:
-            path = write_data_to_new_file(ticker, multiplier, str(current_date_obj), str(current_date_obj + timedelta(days=datedelta)), dir)
-        else:
-            append_data_to_file(ticker, multiplier, str(current_date_obj), str(current_date_obj + timedelta(days=datedelta)), path)
-
-        current_date_obj += timedelta(days=datedelta+1)
-        firstfetch = False
-        counter += 1 
-
-        if counter == 5:
-            time.sleep(60)
-            counter = 0
-            str(current_date_obj + timedelta(days=datedelta))
 
 def add_indicators(ticker, df):
     trading_df = df.loc[df['daily_candle_counter'] > 0]

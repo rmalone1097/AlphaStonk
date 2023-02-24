@@ -16,35 +16,35 @@ class StockEnv(Env):
         '''
         ### Input
         The input is a `dataframe` with shape `(candles,1 + 16n)` where n is the number of tickers and the elmeents correspond to the following:
-        | Num | Observation                          | Min  | Max | Unit         |
-        |-----|--------------------------------------|------|-----|--------------|
-        | 0   | daily_candle_counter                 | 0    | 390 | candles      |
+        | Num     | Observation                          | Min  | Max | Unit         |
+        |---------|--------------------------------------|------|-----|--------------|
+        | 0       | daily_candle_counter                 | 0    | 390 | candles      |
 
-        | 1n  | energy                               | -Inf | Inf | N/A          |
-        | 2n  | close                                | 0    | Inf | dollars ($)  |
-        | 3n  | high                                 | 0    | Inf | dollars ($)  |
-        | 4n  | low                                  | 0    | Inf | dollars ($)  |
-        | 5n  | open                                 | 0    | Inf | dollars ($)  |
-        | 6n  | volume                               | 0    | Inf | shares       |
-        | 7n  | ema_5                                | 0    | Inf | dollars ($)  |
-        | 8n  | ema_10                               | 0    | Inf | dollars ($)  |
-        | 9n  | ema_15                               | 0    | Inf | dollars ($)  |
-        | 10n | ema_25                               | 0    | Inf | dollars ($)  |
-        | 11n | ema_40                               | 0    | Inf | dollars ($)  |
-        | 12n | ema_65                               | 0    | Inf | dollars ($)  |
-        | 13n | ema_170                              | 0    | Inf | dollars ($)  |
-        | 14n | ema_250                              | 0    | Inf | dollars ($)  |
-        | 15n | ema_360                              | 0    | Inf | dollars ($)  |
-        | 16n | ema_445                              | 0    | Inf | dollars ($)  |
+        | 1(n+1)  | energy                               | -Inf | Inf | N/A          |
+        | 2(n+1)  | close                                | 0    | Inf | dollars ($)  |
+        | 3(n+1)  | high                                 | 0    | Inf | dollars ($)  |
+        | 4(n+1)  | low                                  | 0    | Inf | dollars ($)  |
+        | 5(n+1)  | open                                 | 0    | Inf | dollars ($)  |
+        | 6(n+1)  | volume                               | 0    | Inf | shares       |
+        | 7(n+1)  | ema_5                                | 0    | Inf | dollars ($)  |
+        | 8(n+1)  | ema_10                               | 0    | Inf | dollars ($)  |
+        | 9(n+1)  | ema_15                               | 0    | Inf | dollars ($)  |
+        | 10(n+1) | ema_25                               | 0    | Inf | dollars ($)  |
+        | 11(n+1) | ema_40                               | 0    | Inf | dollars ($)  |
+        | 12(n+1) | ema_65                               | 0    | Inf | dollars ($)  |
+        | 13(n+1) | ema_170                              | 0    | Inf | dollars ($)  |
+        | 14(n+1) | ema_250                              | 0    | Inf | dollars ($)  |
+        | 15(n+1) | ema_360                              | 0    | Inf | dollars ($)  |
+        | 16(n+1) | ema_445                              | 0    | Inf | dollars ($)  |
 
         ### Action Space
         The action is a `ndarray` with shape `(1 + 2n,)` (short/long/none) where n is number of tickers
-        | Num | Action                 |
-        |-----|------------------------|
-        | 0   | No position            |
+        | Num     | Action                 |
+        |---------|------------------------|
+        | 0       | No position            |
 
-        | 1n  | Long position          |
-        | 2n  | Short position         |
+        | 1(n+1)  | Long position          |
+        | 2(n+1)  | Short position         |
 
         ### Observation Space
         Slice is a `ndarray` with shape `(390 * window_days,5n)` where n is the number of tickers and the elements correspond to the following:
@@ -57,31 +57,31 @@ class StockEnv(Env):
         | 4   | volume                               | 0    | Inf | shares       |
         
         Vector is a 'ndarray' with shape '(6 + 16n,)' where n is the number of tickers and the elements correspond to the following:
-        | Num | Observation                          | Min  | Max | Unit         |
-        |-----|--------------------------------------|------|-----|--------------|
-        | 0   | portfolio_value                      | -Inf | Inf | dollars ($)  |
-        | 1   | position_log                         | 0    | 2   | discrete     |
-        | 2   | action_taken                         | 0    | 2   | discrete     |
-        | 3   | start_price                          | 0    | Inf | dollars ($)  |
-        | 4   | holding_time                         | 0    | Inf | timesteps    |
-        | 5   | latest_candle_counter                | 0    | Inf | candles      |
+        | Num     | Observation                          | Min  | Max | Unit         |
+        |---------|--------------------------------------|------|-----|--------------|
+        | 0       | portfolio_value                      | -Inf | Inf | dollars ($)  |
+        | 1       | position_log                         | 0    | 2   | discrete     |
+        | 2       | action_taken                         | 0    | 2   | discrete     |
+        | 3       | start_price                          | 0    | Inf | dollars ($)  |
+        | 4       | holding_time                         | 0    | Inf | timesteps    |
+        | 5       | latest_candle_counter                | 0    | Inf | candles      |
 
-        | 6n  | latest_energy                        | -Inf | Inf | N/A          |
-        | 7n  | latest_close                         | 0    | Inf | dollars ($)  |
-        | 8n  | latest_high                          | 0    | Inf | dollars ($)  |
-        | 9n  | latest_low                           | 0    | Inf | dollars ($)  |
-        | 10n | latest_open                          | 0    | Inf | dollars ($)  |
-        | 11n | latest_volume                        | 0    | Inf | shares       |
-        | 12n | latest_ema_5                         | 0    | Inf | dollars ($)  |
-        | 13n | latest_ema_10                        | 0    | Inf | dollars ($)  |
-        | 14n | latest_ema_15                        | 0    | Inf | dollars ($)  |
-        | 15n | latest_ema_25                        | 0    | Inf | dollars ($)  |
-        | 16n | latest_ema_40                        | 0    | Inf | dollars ($)  |
-        | 17n | latest_ema_65                        | 0    | Inf | dollars ($)  |
-        | 18n | latest_ema_170                       | 0    | Inf | dollars ($)  |
-        | 19n | latest_ema_250                       | 0    | Inf | dollars ($)  |
-        | 20n | latest_ema_360                       | 0    | Inf | dollars ($)  |
-        | 21n | latest_ema_445                       | 0    | Inf | dollars ($)  |
+        | 6(n+1)  | latest_energy                        | -Inf | Inf | N/A          |
+        | 7(n+1)  | latest_close                         | 0    | Inf | dollars ($)  |
+        | 8(n+1)  | latest_high                          | 0    | Inf | dollars ($)  |
+        | 9(n+1)  | latest_low                           | 0    | Inf | dollars ($)  |
+        | 10(n+1) | latest_open                          | 0    | Inf | dollars ($)  |
+        | 11(n+1) | latest_volume                        | 0    | Inf | shares       |
+        | 12(n+1) | latest_ema_5                         | 0    | Inf | dollars ($)  |
+        | 13(n+1) | latest_ema_10                        | 0    | Inf | dollars ($)  |
+        | 14(n+1) | latest_ema_15                        | 0    | Inf | dollars ($)  |
+        | 15(n+1) | latest_ema_25                        | 0    | Inf | dollars ($)  |
+        | 16(n+1) | latest_ema_40                        | 0    | Inf | dollars ($)  |
+        | 17(n+1) | latest_ema_65                        | 0    | Inf | dollars ($)  |
+        | 18(n+1) | latest_ema_170                       | 0    | Inf | dollars ($)  |
+        | 19(n+1) | latest_ema_250                       | 0    | Inf | dollars ($)  |
+        | 20(n+1) | latest_ema_360                       | 0    | Inf | dollars ($)  |
+        | 21(n+1) | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
         # Number of tickers (dfs passed in initialization)
         self.num_tickers = config['num_tickers']
