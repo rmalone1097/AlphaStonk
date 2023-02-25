@@ -148,6 +148,9 @@ def df_builder(ticker:str, pickle_dir):
         delta = dt - prev_dt
         m_delta = int(delta.total_seconds() / 60)
 
+        delta_to_end = prev_dt.replace(hour=15, minute=59) - prev_dt
+        m_delta_to_end = int(delta_to_end.total_seconds() / 60)
+
         # Check for first dp in trading day. If no 9:30 dp, starting dp will be dp prior to the first one in trading day
         if first_found == False:
             if dt.time() == datetime.time(9, 30):
@@ -164,17 +167,16 @@ def df_builder(ticker:str, pickle_dir):
         elif first_found == True:
             # Check for last dp
             if dt.time() == datetime.time(15, 59):
-                daily_array = np.concatenate((daily_array, array[i-1:i+1, :]), axis=0)
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
+                daily_array = np.concatenate((daily_array, row), axis=0)
                 daily_arrays.append(daily_array)
                 daily_array = np.array([[]])
                 first_found = False
 
-            elif dt.time() > datetime.time(15, 59):
-                delta = prev_dt.replace(hour=15, minute=59) - prev_dt
-                m_delta = int(delta.total_seconds() / 60)
-                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
+            elif dt.time() > datetime.time(15, 59) or m_delta_to_end < m_delta:
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta_to_end, axis=0)))
                 daily_arrays.append(daily_array)
-                daily_array = []
+                daily_array = np.array([[]])
                 first_found = False
             
             else:
