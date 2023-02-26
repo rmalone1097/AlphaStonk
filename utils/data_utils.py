@@ -210,18 +210,42 @@ def df_builder(ticker:str, pickle_dir):
 
         if dt.month == 7: 
             if dt.day == 3:
+                if candle_counter == 0:
+                    delta = dt - dt.replace(hour=7, minute=30)
+                    m_delta = int(delta.total_seconds() / 60)
+                    candle_counter += m_delta
                 candle_counter += 1
             elif dt.year == 2002 and dt.day == 5:
+                if candle_counter == 0:
+                    delta = dt - dt.replace(hour=7, minute=30)
+                    m_delta = int(delta.total_seconds() / 60)
+                    candle_counter += m_delta
                 candle_counter += 1
         elif dt.month == 11:
             if dt.day == black_friday[dt.year]:
+                if candle_counter == 0:
+                    delta = dt - dt.replace(hour=7, minute=30)
+                    m_delta = int(delta.total_seconds() / 60)
+                    candle_counter += m_delta
                 candle_counter += 1
         elif dt.month == 12:
             if dt.day == 24:
+                if candle_counter == 0:
+                    delta = dt - dt.replace(hour=7, minute=30)
+                    m_delta = int(delta.total_seconds() / 60)
+                    candle_counter += m_delta
                 candle_counter += 1
             elif dt.year == 1999 and dt.day == 31:
+                if candle_counter == 0:
+                    delta = dt - dt.replace(hour=7, minute=30)
+                    m_delta = int(delta.total_seconds() / 60)
+                    candle_counter += m_delta
                 candle_counter += 1
             elif dt.year == 2003 and dt.day == 26:
+                if candle_counter == 0:
+                    delta = dt - dt.replace(hour=7, minute=30)
+                    m_delta = int(delta.total_seconds() / 60)
+                    candle_counter += m_delta
                 candle_counter += 1
         
         if candle_counter == candle_counter_log:
