@@ -174,7 +174,7 @@ def df_builder(ticker:str, pickle_dir):
                 first_found = False
 
             elif dt.time() > datetime.time(15, 59) or m_delta_to_end < m_delta:
-                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta_to_end, axis=0)))
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, (m_delta_to_end + 1), axis=0)))
                 daily_arrays.append(daily_array)
                 daily_array = np.array([[]])
                 first_found = False
@@ -201,23 +201,35 @@ def df_builder(ticker:str, pickle_dir):
                     2009:27, 2010:26, 2011:25, 2012:23, 2013:29, 2014:28, 2015:27, 2016:25, 2017:24, 2018:23,
                     2019:29, 2020:27, 2021:26, 2022:25}
     # Handle holidays
+
+    early_close_candles = 210
+    candle_counter = 0
+    candle_counter_log = 0
     for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
         dt = row.Index
-        if dt.month == 7:
-            if dt.day == 3 and dt.hour >= 11:
-                i_to_remove.append(dt)
-            elif dt.year == 2002 and dt.day == 5 and dt.hour >= 11:
-                i_to_remove.append(dt)
+
+        if dt.month == 7: 
+            if dt.day == 3:
+                candle_counter += 1
+            elif dt.year == 2002 and dt.day == 5:
+                candle_counter += 1
         elif dt.month == 11:
-            if dt.day == black_friday[dt.year] and dt.hour >= 11:
-                i_to_remove.append(dt)
+            if dt.day == black_friday[dt.year]:
+                candle_counter += 1
         elif dt.month == 12:
-            if dt.day == 24 and dt.hour >= 11:
-                i_to_remove.append(dt)
-            elif dt.year == 1999 and dt.day == 31 and dt.hour >=11:
-                i_to_remove.append(dt)
-            elif dt.year == 2003 and dt.day == 26 and dt.hour >=11:
-                i_to_remove.append(dt)
+            if dt.day == 24:
+                candle_counter += 1
+            elif dt.year == 1999 and dt.day == 31:
+                candle_counter += 1
+            elif dt.year == 2003 and dt.day == 26:
+                candle_counter += 1
+        
+        if candle_counter == candle_counter_log:
+            candle_counter = 0
+        elif candle_counter > early_close_candles:
+            i_to_remove.append(dt)
+        
+        candle_counter_log = candle_counter
     
     df = df.drop(index=i_to_remove)
 

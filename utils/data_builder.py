@@ -27,7 +27,7 @@ counter = 0
     else:
         counter = 0
     
-    if counter >= 10:
+    if counter >= 100:
         print('AAPL: ', row.Index)
         print('SPY: ', SPY_df.iloc[i].name)'''
 
