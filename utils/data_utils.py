@@ -196,6 +196,31 @@ def df_builder(ticker:str, pickle_dir):
     df = df.set_index('datetime') 
     df = df.fillna(0)
 
+    i_to_remove = []
+    black_friday = {1999:26, 2000:24, 2001:23, 2002:29, 2003:28, 2004:26, 2005:25, 2006:24, 2007:23, 2008:28,
+                    2009:27, 2010:26, 2011:25, 2012:23, 2013:29, 2014:28, 2015:27, 2016:25, 2017:24, 2018:23,
+                    2019:29, 2020:27, 2021:26, 2022:25}
+    # Handle holidays
+    for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
+        dt = row.Index
+        if dt.month == 7:
+            if dt.day == 3 and dt.hour >= 11:
+                i_to_remove.append(dt)
+            elif dt.year == 2002 and dt.day == 5 and dt.hour >= 11:
+                i_to_remove.append(dt)
+        elif dt.month == 11:
+            if dt.day == black_friday[dt.year] and dt.hour >= 11:
+                i_to_remove.append(dt)
+        elif dt.month == 12:
+            if dt.day == 24 and dt.hour >= 11:
+                i_to_remove.append(dt)
+            elif dt.year == 1999 and dt.day == 31 and dt.hour >=11:
+                i_to_remove.append(dt)
+            elif dt.year == 2003 and dt.day == 26 and dt.hour >=11:
+                i_to_remove.append(dt)
+    
+    df = df.drop(index=i_to_remove)
+
     file_name = 'df_' + ticker + '_built.pkl'
     df.to_pickle(Path.home() / 'data' / file_name)
 

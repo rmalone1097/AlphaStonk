@@ -14,15 +14,22 @@ data_path = Path.home() / 'data'
 #SPY_df = prepare_state_df(['SPY'], data_path)
 #df = finnhub_data_writer(['AAPL'], 928769400)
 #df = df_builder(Path.home() / 'data' / 'AAPL_928769400_1676332664_1_raw.pkl')
-#df_builder('SPY', Path.home() / 'data' / 'SPY_928761600_1676581140_1_raw.pkl')
-#df_builder('AAPL', Path.home() / 'data' / 'AAPL_928761600_1676581140_1_raw.pkl')
+df_builder('SPY', Path.home() / 'data' / 'SPY_928761600_1676581140_1_raw.pkl')
+df_builder('AAPL', Path.home() / 'data' / 'AAPL_928761600_1676581140_1_raw.pkl')
 SPY_df = pd.read_pickle(Path.home() / 'data' / 'df_SPY_built.pkl')
 AAPL_df = pd.read_pickle(Path.home() / 'data' / 'df_AAPL_built.pkl')
 
-for i, row in tqdm(enumerate(AAPL_df.itertuples(index=True)), total=len(AAPL_df)):
+counter = 0
+
+'''for i, row in tqdm(enumerate(AAPL_df.itertuples(index=True)), total=len(AAPL_df)):
     if row.Index != SPY_df.iloc[i].name:
+        counter += 1
+    else:
+        counter = 0
+    
+    if counter >= 10:
         print('AAPL: ', row.Index)
-        print('SPY: ', SPY_df.iloc[i].name)
+        print('SPY: ', SPY_df.iloc[i].name)'''
 
 #df['dt'] = df.apply(lambda row: datetime.fromtimestamp(row.timestamp), axis=1)         
 '''raw_df = pd.read_pickle(Path.home() / 'data' / 'SPY_928769400_1676581140_1_raw.pkl')  
