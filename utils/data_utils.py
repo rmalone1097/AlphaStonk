@@ -11,6 +11,7 @@ import mplfinance as mpf
 import numpy as np
 import finnhub
 
+from functools import reduce
 from pathlib import Path
 from datetime import timedelta, date
 import time
@@ -202,6 +203,9 @@ def df_builder(ticker:str, pickle_dir):
     # Handle holidays
 
     early_close_candles = 210
+    close_candles = 390
+    daily_candle_counter = []
+    daily_candle = 0
     candle_counter = 0
     candle_counter_log = 0
     for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
@@ -263,7 +267,7 @@ def df_builder(ticker:str, pickle_dir):
     return raw_df, df
 
 def add_indicators(ticker, df):
-    trading_df = df.loc[df['daily_candle_counter'] > 0]
+    trading_df = df
 
     # Minute length EMA
     trading_df[ticker + '_ema_5'] = ta.ema(trading_df[ticker + '_close'], length=5)
@@ -276,8 +280,12 @@ def add_indicators(ticker, df):
     trading_df[ticker + '_ema_250'] = ta.ema(trading_df[ticker + '_close'], length=250)
     trading_df[ticker + '_ema_360'] = ta.ema(trading_df[ticker + '_close'], length=360)
     trading_df[ticker + '_ema_445'] = ta.ema(trading_df[ticker + '_close'], length=445) 
-    trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
-    trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
+    #trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
+    #trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
+
+    trading_df[ticker + '_energy'] = (trading_df[ticker + '_ema_25'] - trading_df[ticker + '_ema_170']) / trading_df[ticker + '_ema_170'] * 100
+    energy = trading_df.pop(ticker + '_energy')
+    df = df.insert(0, ticker + '_energy', energy)
 
     #day length ema (5, 10, 20, 50, 100)
     #trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
@@ -286,46 +294,24 @@ def add_indicators(ticker, df):
     #trading_df['ema_50_day'] = ta.ema(trading_df['close'], length=50*390)
     #trading_df['ema_100_day'] = ta.ema(trading_df['close'], length=100*390)
 
-    return trading_df
+    return trading_df.fillna(0)
 
 def prepare_state_df(tickers, data_path):
     df_list = []
-    for ticker in tickers:
+    column_list = []
+    for ticker in tqdm(tickers):
         file = 'df_' + ticker + '_built.pkl'
         df = pd.read_pickle(data_path / file)
         trading_df = add_indicators(ticker, df)
         trading_df = trading_df.drop(columns=['status', 'timestamp'])
-        trading_df = trading_df.rename(columns={'close':ticker+'_close', 'high':ticker+'_high', 'low':ticker+'_low', 'open':ticker+'_open', 'volume':ticker+'_volume'})
-        df_list.append(trading_df)
+        #trading_df = trading_df.rename(columns={'close':ticker+'_close', 'high':ticker+'_high', 'low':ticker+'_low', 'open':ticker+'_open', 'volume':ticker+'_volume'})
+        df_list.append(trading_df.to_numpy())
+        column_list += list(trading_df.columns.values)
 
-    df = pd.concat(df_list)
+    #df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True), df_list)
+    df = pd.DataFrame(np.concatenate((df_list), axis=1), columns=column_list)
 
-    daily_candle_counter = []
-    energies = []
-    prev_counter = 0
-    prev_date = 0
-    spaced_entries = dict()
-    for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
-        energy = (row.ema_25 - row.ema_170) / row.ema_170 * 100
-        energies.append(energy)
-
-        counter = 0
-        date = row.Index
-        # Make daily candle counter during trading hours
-        if prev_counter != 0:
-            if date.hour == 16 and date.minute == 0:
-                counter = 0
-            else:
-                counter = prev_counter + 1
-        elif date.hour == 9 and date.minute == 30:
-            counter = 1
-        daily_candle_counter.append(counter)
-        prev_counter = counter
-        
-    df = df.insert(0, 'daily_candle_counter', daily_candle_counter)
-    df = df.insert(1, 'energy', energies)
-
-    return df_list[0].fillna(0)
+    return df
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
