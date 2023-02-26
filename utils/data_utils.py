@@ -193,7 +193,6 @@ def df_builder(ticker:str, pickle_dir):
     #df['daily_candle_counter'] = daily_candle_counter
     df['datetime'] = df.apply(lambda row: datetime.datetime.fromtimestamp(row.timestamp), axis=1)
     raw_df['dt'] = raw_df.apply(lambda row: datetime.datetime.fromtimestamp(row.t), axis=1)   
-    df = df.set_index('datetime') 
     df = df.fillna(0)
 
     i_to_remove = []
@@ -206,7 +205,7 @@ def df_builder(ticker:str, pickle_dir):
     candle_counter = 0
     candle_counter_log = 0
     for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
-        dt = row.Index
+        dt = row.datetime
 
         if dt.month == 7: 
             if dt.day == 3:
@@ -251,12 +250,13 @@ def df_builder(ticker:str, pickle_dir):
         if candle_counter == candle_counter_log:
             candle_counter = 0
         elif candle_counter > early_close_candles:
-            i_to_remove.append(dt)
+            i_to_remove.append(i)
         
         candle_counter_log = candle_counter
     
     df = df.drop(index=i_to_remove)
 
+    df = df.set_index('datetime') 
     file_name = 'df_' + ticker + '_built.pkl'
     df.to_pickle(Path.home() / 'data' / file_name)
 
