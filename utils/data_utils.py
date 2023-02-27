@@ -337,24 +337,32 @@ def add_indicators(ticker, df):
 
     return trading_df.fillna(0)
 
+# Returns full train df, obs train df used for state slice, full test df, obs test df used for state slice
 def prepare_state_df(tickers, data_path, train_dps:int):
     df_list = []
     column_list = []
+    obs_df_list = []
+    obs_column_list = []
+
     for ticker in tqdm(tickers):
         file = 'df_' + ticker + '_built.pkl'
         df = pd.read_pickle(data_path / file)
         daily_candle_list = list(df['daily_candle_counter'].values)
+        df = df.drop(columns=['status', 'timestamp', 'daily_candle_counter'])
+        obs_df_list.append(df.copy(deep=True))
+        obs_column_list += list(df.columns.values)
+
         trading_df = add_indicators(ticker, df)
-        trading_df = trading_df.drop(columns=['status', 'timestamp', 'daily_candle_counter'])
-        #trading_df = trading_df.rename(columns={'close':ticker+'_close', 'high':ticker+'_high', 'low':ticker+'_low', 'open':ticker+'_open', 'volume':ticker+'_volume'})
+        #trading_df = trading_df.drop(columns=['daily_candle_counter'])
         df_list.append(trading_df.to_numpy())
         column_list += list(trading_df.columns.values)
 
-    #df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True), df_list)
-    df = pd.DataFrame(np.concatenate((df_list), axis=1), columns=column_list)
-    df.insert(0, 'daily_candle', daily_candle_list)
+    full_df = pd.DataFrame(np.concatenate((df_list), axis=1), columns=column_list)
+    full_df.insert(0, 'daily_candle', daily_candle_list)
 
-    return df.iloc[0:train_dps, :], df.iloc[train_dps:len(df)-1, :]
+    obs_df = pd.DataFrame(np.concatenate((obs_df_list), axis=1), columns=obs_column_list)
+
+    return full_df.iloc[0:train_dps, :], obs_df.iloc[0:train_dps, :], full_df.iloc[train_dps:len(df)-1, :], obs_df.iloc[train_dps:len(df)-1, :]
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []

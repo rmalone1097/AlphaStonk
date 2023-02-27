@@ -83,12 +83,13 @@ class StockEnv(Env):
         | 20(n+1) | latest_ema_360                       | 0    | Inf | dollars ($)  |
         | 21(n+1) | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
+        self.tickers = config['tickers']
         # Number of tickers (dfs passed in initialization)
-        self.num_tickers = config['num_tickers']
+        self.num_tickers = len(self.tickers)
         # Full df input
-        self.full_df = config['df']
+        self.full_df = config['full_df']
         # Obs df is only columns used in state slice
-        self.obs_df = self.full_df.loc[:, 'close':'ema_5']
+        self.obs_df = config['obs_df']
         self.action_space = Discrete(0 + 2*self.num_tickers)
         # Window width of data slice per step (days)
         self.window_days = 2

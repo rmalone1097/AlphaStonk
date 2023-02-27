@@ -20,7 +20,7 @@ from ray.rllib.algorithms.ppo import PPO, PPOConfig
 from ray.tune.registry import get_trainable_cls
 
 from envs.stock_env import StockEnv
-from utils.data_utils import add_indicators
+from utils.data_utils import prepare_state_df
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -39,10 +39,14 @@ parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-pickle_dir = Path.home()
-df = pd.read_pickle(pickle_dir / 'SPY_minute_2012-08-22_built_gcp.pkl')
-trading_df = add_indicators(df)
-trading_df = trading_df.fillna(0)
+tickers = ['SPY']
+cande_length = 1
+start_stamp = 928761600
+end_stamp = 1676581140
+data_path = Path.home() / 'data'
+full_train_df, obs_train_df, _, _ = prepare_state_df(tickers, data_path, 2206200)
+print(full_train_df)
+print(obs_train_df)
 
 if __name__ == "__main__":
 
@@ -50,7 +54,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = (
         PPOConfig()
-        .environment(StockEnv, env_config={"df": trading_df})
+        .environment(StockEnv, env_config={"full_df": full_train_df,
+                                           "obs_df": obs_train_df,
+                                           "tickers": tickers})
         .framework(args.framework)
         .training()
         .rollouts(num_rollout_workers=1)
