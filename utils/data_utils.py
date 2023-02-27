@@ -203,7 +203,7 @@ def df_builder(ticker:str, pickle_dir):
     # Handle holidays
 
     early_close_candles = 210
-    close_candles = 390
+    max_candles = 390
     daily_candle_counter = []
     daily_candle = 0
     candle_counter = 0
@@ -213,52 +213,93 @@ def df_builder(ticker:str, pickle_dir):
 
         if dt.month == 7: 
             if dt.day == 3:
+                max_candles = early_close_candles
                 if candle_counter == 0:
                     delta = dt - dt.replace(hour=7, minute=30)
                     m_delta = int(delta.total_seconds() / 60)
                     candle_counter += m_delta
                 candle_counter += 1
+
             elif dt.year == 2002 and dt.day == 5:
+                max_candles = early_close_candles
                 if candle_counter == 0:
                     delta = dt - dt.replace(hour=7, minute=30)
                     m_delta = int(delta.total_seconds() / 60)
                     candle_counter += m_delta
                 candle_counter += 1
+            
+            else:
+                if max_candles != 390:
+                    max_candles = 390
+                    candle_counter = 0
+                candle_counter += 1
+
         elif dt.month == 11:
             if dt.day == black_friday[dt.year]:
+                max_candles = early_close_candles
                 if candle_counter == 0:
                     delta = dt - dt.replace(hour=7, minute=30)
                     m_delta = int(delta.total_seconds() / 60)
                     candle_counter += m_delta
                 candle_counter += 1
+            
+            else:
+                if max_candles != 390:
+                    max_candles = 390
+                    candle_counter = 0
+                candle_counter += 1
+
         elif dt.month == 12:
             if dt.day == 24:
+                max_candles = early_close_candles
                 if candle_counter == 0:
                     delta = dt - dt.replace(hour=7, minute=30)
                     m_delta = int(delta.total_seconds() / 60)
                     candle_counter += m_delta
                 candle_counter += 1
+
             elif dt.year == 1999 and dt.day == 31:
+                max_candles = early_close_candles
                 if candle_counter == 0:
                     delta = dt - dt.replace(hour=7, minute=30)
                     m_delta = int(delta.total_seconds() / 60)
                     candle_counter += m_delta
                 candle_counter += 1
+
             elif dt.year == 2003 and dt.day == 26:
+                max_candles = early_close_candles
                 if candle_counter == 0:
                     delta = dt - dt.replace(hour=7, minute=30)
                     m_delta = int(delta.total_seconds() / 60)
                     candle_counter += m_delta
                 candle_counter += 1
+            
+            else:
+                if max_candles != 390:
+                    max_candles = 390
+                    candle_counter = 0
+                candle_counter += 1
+            
+        else:
+            if max_candles != 390:
+                max_candles = 390
+                candle_counter = 0
+            candle_counter += 1
         
-        if candle_counter == candle_counter_log:
-            candle_counter = 0
-        elif candle_counter > early_close_candles:
+        if candle_counter > max_candles and max_candles == early_close_candles:
             i_to_remove.append(i)
+        elif candle_counter == candle_counter_log:
+            i_to_remove.append(i)
+        else:
+            daily_candle_counter.append(candle_counter)
         
         candle_counter_log = candle_counter
+        
+        if candle_counter == max_candles:
+            candle_counter = 0
     
     df = df.drop(index=i_to_remove)
+    df['daily_candle_counter'] = daily_candle_counter
 
     df = df.set_index('datetime') 
     file_name = 'df_' + ticker + '_built.pkl'
