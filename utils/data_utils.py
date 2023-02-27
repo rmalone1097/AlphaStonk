@@ -326,7 +326,7 @@ def add_indicators(ticker, df):
 
     trading_df[ticker + '_energy'] = (trading_df[ticker + '_ema_25'] - trading_df[ticker + '_ema_170']) / trading_df[ticker + '_ema_170'] * 100
     energy = trading_df.pop(ticker + '_energy')
-    df = df.insert(0, ticker + '_energy', energy)
+    trading_df.insert(0, ticker + '_energy', energy)
 
     #day length ema (5, 10, 20, 50, 100)
     #trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
@@ -337,22 +337,24 @@ def add_indicators(ticker, df):
 
     return trading_df.fillna(0)
 
-def prepare_state_df(tickers, data_path):
+def prepare_state_df(tickers, data_path, train_dps:int):
     df_list = []
     column_list = []
     for ticker in tqdm(tickers):
         file = 'df_' + ticker + '_built.pkl'
         df = pd.read_pickle(data_path / file)
+        daily_candle_list = list(df['daily_candle_counter'].values)
         trading_df = add_indicators(ticker, df)
-        trading_df = trading_df.drop(columns=['status', 'timestamp'])
+        trading_df = trading_df.drop(columns=['status', 'timestamp', 'daily_candle_counter'])
         #trading_df = trading_df.rename(columns={'close':ticker+'_close', 'high':ticker+'_high', 'low':ticker+'_low', 'open':ticker+'_open', 'volume':ticker+'_volume'})
         df_list.append(trading_df.to_numpy())
         column_list += list(trading_df.columns.values)
 
     #df = reduce(lambda x, y: pd.merge(x, y, left_index=True, right_index=True), df_list)
     df = pd.DataFrame(np.concatenate((df_list), axis=1), columns=column_list)
+    df.insert(0, 'daily_candle', daily_candle_list)
 
-    return df
+    return df.iloc[0:train_dps, :], df.iloc[train_dps:len(df)-1, :]
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
