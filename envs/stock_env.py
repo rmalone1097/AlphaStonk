@@ -90,14 +90,14 @@ class StockEnv(Env):
         self.full_df = config['full_df']
         # Obs df is only columns used in state slice
         self.obs_df = config['obs_df']
-        self.action_space = Discrete(0 + 2*self.num_tickers)
+        self.action_space = Discrete(1 + 2*self.num_tickers)
         # Window width of data slice per step (days)
         self.window_days = 2
         # Observation dictionary
         self.observation_space = Dict({
             'slice': Box(low=0, high=np.inf, shape=(self.window_days*390, 5*self.num_tickers), dtype=np.float32),
-            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0, 0], dtype=np.float32), np.repeat(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(15*self.num_tickers, dtype=np.float32))), self.num_tickers, axis=0))), 
-                          high=np.concatenate((np.array([np.inf, 2, 2, np.inf, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(16, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
+            'vector': Box(low=np.concatenate((np.array([-np.inf, 0, 0, 0, 0, 0], dtype=np.float32), np.tile(np.concatenate((np.array([-np.inf], dtype=np.float32), np.zeros(15, dtype=np.float32))), self.num_tickers))), 
+                          high=np.concatenate((np.array([np.inf, 2*self.num_tickers, 2*self.num_tickers, np.inf, np.inf, np.inf], dtype=np.float32), np.repeat(np.full(16, np.inf, dtype=np.float32), self.num_tickers, axis=0))))
         })
         self.full_df_tensor = self.full_df.to_numpy()
         self.obs_df_tensor = self.obs_df.to_numpy()
@@ -195,14 +195,14 @@ class StockEnv(Env):
 
         # Ticker number starting at 0
         self.ticker_number = math.floor((self.position_log - 1) / 2)
-        self.current_price = self.state['slice'][-1, 5*(self.ticker_number + 1)]
+        self.current_price = self.state['slice'][-1, 5*(self.ticker_number)]
 
         # Worth of position, calculated as percentage change
         if self.position_log == 0:
             position_value = 0
         elif self.position_log % 2 == 1:
             position_value = (self.current_price - self.start_price) / self.start_price * 100
-        elif self.position_log % 2 == 2:
+        elif self.position_log % 2 == 0:
             position_value = (self.start_price - self.current_price) / self.start_price * 100
         
         # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
