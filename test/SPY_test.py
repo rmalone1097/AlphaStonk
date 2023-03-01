@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from typing import Optional
 from utils.data_utils import *
+from utils.data_utils import *
 from pathlib import Path
 from envs.stock_env_test import StockEnv
 from ray.rllib.algorithms.algorithm import Algorithm
@@ -20,8 +21,14 @@ end_stamp = 1676581140
 data_path = Path.home() / 'data'
 _, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2206200)
 
-def test_algo(algo_path, env):
+env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers})
+algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
+roi_file_name = 'SPY_AAPL_BAC_PPO_roi.csv'
+portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv'
+
+def test_algo(algo_path, env, roi_file_name, portfolio_file_name):
     roi_list = []
+    portfolio_list = []
     algo = Algorithm.from_checkpoint(algo_path)
 
     episode_reward = 0
@@ -35,8 +42,27 @@ def test_algo(algo_path, env):
     return roi_list
 
 with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_results.csv', newline='') as f:
+        portfolio_list.append(env.portfolio)
+        
+    with open(roi_file_name, 'w', newline="") as f:
+        write = csv.writer(f)
+        write.writerow(roi_list)
+    
+    with open(portfolio_file_name, 'w', newline="") as f:
+        write = csv.writer(f)
+        write.writerow(portfolio_list)
+
+'''with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / file_name, newline='') as f:
     reader = csv.reader(f)
-    data = list(reader)
+    data = list(reader)'''
+
+with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_portfolio.csv', newline='') as l:
+    reader2 = csv.reader(l)
+    data2 = list(reader2)
+
+with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'results.csv', newline='') as f:
+    reader = csv.reader(f)
+    data3 = list(reader)
 
 with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_portfolio.csv', newline='') as l:
     reader2 = csv.reader(l)
@@ -59,6 +85,8 @@ def plot_portfolio(portfolio_list):
     plt.plot((np.linspace(0, len(data2[0]), len(data2[0]))), [float(i) for i in portfolio_list])
     plt.show()
 
+if __name__ == "__main__":
+    test_algo(algo_path, env, roi_file_name, portfolio_file_name)
 plot_roi_list(data[0])
 #plot_roi_list(data3[0])
 #plot_portfolio(data2[0])
