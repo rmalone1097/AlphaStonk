@@ -41,28 +41,9 @@ def test_algo(algo_path, env, roi_file_name, portfolio_file_name):
         roi_list.append(env.total_roi)
     return roi_list
 
-with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_results.csv', newline='') as f:
-        portfolio_list.append(env.portfolio)
-        
-    with open(roi_file_name, 'w', newline="") as f:
-        write = csv.writer(f)
-        write.writerow(roi_list)
-    
-    with open(portfolio_file_name, 'w', newline="") as f:
-        write = csv.writer(f)
-        write.writerow(portfolio_list)
-
-'''with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / file_name, newline='') as f:
-    reader = csv.reader(f)
-    data = list(reader)'''
-
-with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_portfolio.csv', newline='') as l:
-    reader2 = csv.reader(l)
-    data2 = list(reader2)
-
-with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'results.csv', newline='') as f:
-    reader = csv.reader(f)
-    data3 = list(reader)
+with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_results.csv', newline='') as l:
+    reader = csv.reader(l)
+    data = list(reader)
 
 with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'SPY_AAPL_BAC_PPO_portfolio.csv', newline='') as l:
     reader2 = csv.reader(l)
