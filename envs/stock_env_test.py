@@ -227,8 +227,6 @@ class StockEnv(Env):
                 self.reward = 0
             else:
                 self.reward = -abs(reward)
-        
-        self.portfolio += self.transaction_value * position_value
 
         vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
@@ -243,6 +241,8 @@ class StockEnv(Env):
             # Calcualte final ROI and update total
             self.roi = position_value
             self.total_roi += self.roi
+            
+            self.portfolio += max(self.transaction_value, self.portfolio) * (self.roi / 100)
 
             if self.position_log == 1:
                 self.long_roi += self.roi
@@ -274,8 +274,8 @@ class StockEnv(Env):
             elif action == 2:
                 self.shorts += 1
 
-            # Start price of new position is the current price
-            self.start_price = self.current_price
+            new_ticker_number = math.floor((action - 1) / 2)
+            self.start_price = self.state['slice'][-1, 5*(new_ticker_number)]
             self.holding_time = self.minimum_holding_time
         
         # Count long and short candles

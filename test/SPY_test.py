@@ -21,11 +21,13 @@ data_path = Path.home() / 'data'
 _, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2206200)
 
 env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers})
-algo_path = Path.home() / 'ray_results' / 'PPO' /'PPO_StockEnv_f55ec_00000_0_2023-02-28_06-05-54'/'checkpoint_002500'
-file_name = 'SPY_AAPL_BAC_PPO_results.csv'
+algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
+roi_file_name = 'SPY_AAPL_BAC_PPO_roi.csv'
+portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv'
 
-def test_algo(algo_path, env, file_name):
+def test_algo(algo_path, env, roi_file_name, portfolio_file_name):
     roi_list = []
+    portfolio_list = []
     algo = Algorithm.from_checkpoint(algo_path)
 
     episode_reward = 0
@@ -36,9 +38,15 @@ def test_algo(algo_path, env, file_name):
         obs, reward, done, info = env.step(action)
         episode_reward += reward
         roi_list.append(env.total_roi)
-    with open(file_name, 'w', newline="") as f:
+        portfolio_list.append(env.portfolio)
+        
+    with open(roi_file_name, 'w', newline="") as f:
         write = csv.writer(f)
         write.writerow(roi_list)
+    
+    with open(portfolio_file_name, 'w', newline="") as f:
+        write = csv.writer(f)
+        write.writerow(portfolio_list)
 
 '''with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / file_name, newline='') as f:
     reader = csv.reader(f)
@@ -50,4 +58,4 @@ def plot_roi_list(roi_list):
     plt.show()
 
 if __name__ == "__main__":
-    test_algo(algo_path, env, file_name)
+    test_algo(algo_path, env, roi_file_name, portfolio_file_name)

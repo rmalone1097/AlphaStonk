@@ -228,7 +228,7 @@ class StockEnv(Env):
             else:
                 self.reward = -abs(reward)
         
-        self.portfolio += self.transaction_value * position_value
+        self.portfolio += max(self.transaction_value, self.portfolio) * position_value
 
         vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
