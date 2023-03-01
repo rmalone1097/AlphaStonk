@@ -227,8 +227,6 @@ class StockEnv(Env):
                 self.reward = 0
             else:
                 self.reward = -abs(reward)
-        
-        self.portfolio += max(self.transaction_value, self.portfolio) * position_value
 
         vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
@@ -243,6 +241,8 @@ class StockEnv(Env):
             # Calcualte final ROI and update total
             self.roi = position_value
             self.total_roi += self.roi
+
+            self.portfolio += max(self.transaction_value, self.portfolio) * (self.roi / 100)
 
             if self.position_log == 1:
                 self.long_roi += self.roi
