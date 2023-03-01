@@ -59,7 +59,7 @@ if __name__ == "__main__":
                                            "tickers": tickers})
         .framework(args.framework)
         .training(
-            gamme=0.99,
+            gamma=0.99,
             entropy_coeff=0.001,
             num_sgd_iter=10,
             vf_loss_coeff=1e-5,
@@ -68,7 +68,7 @@ if __name__ == "__main__":
                 "max_seq_len": 30,
                 "attention_num_transformer_units": 1,
                 "attention_dim":32,
-                "attention_memory_interface": 10,
+                "attention_memory_inference": 10,
                 "attention_memory_training":10,
                 "attention_num_heads": 1,
                 "attention_head_dim": 32,
