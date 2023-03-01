@@ -274,8 +274,8 @@ class StockEnv(Env):
             elif action == 2:
                 self.shorts += 1
 
-            # Start price of new position is the current price
-            self.start_price = self.current_price
+            new_ticker_number = math.floor((action - 1) / 2)
+            self.start_price = self.state['slice'][-1, 5*(new_ticker_number)]
             self.holding_time = self.minimum_holding_time
         
         # Count long and short candles

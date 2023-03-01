@@ -8,20 +8,23 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from typing import Optional
-from utils.data_utils import add_indicators
+from utils.data_utils import *
 from pathlib import Path
 from envs.stock_env_test import StockEnv
 from ray.rllib.algorithms.algorithm import Algorithm
 
-pickle_dir = Path.home() / 'Git' /  'AlphaStonk' / 'utils'
-df = pd.read_pickle(pickle_dir / 'SPY_minute_2022-08-22_built.pkl')
-test_df = add_indicators(df)
-test_df = test_df.fillna(0)
+tickers = ['SPY', 'AAPL', 'BAC']
+cande_length = 1
+start_stamp = 928761600
+end_stamp = 1676581140
+data_path = Path.home() / 'data'
+_, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2206200)
 
-env = StockEnv(test_df)
-algo_path = Path.home() / "ray_results" / "PPO" / "PPO_StockEnv_aa5c4_00000_0_2023-02-11_12-45-41" / "checkpoint_000003"
+env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers})
+algo_path = Path.home() / 'ray_results' / 'PPO' /'PPO_StockEnv_f55ec_00000_0_2023-02-28_06-05-54'/'checkpoint_002500'
+file_name = 'SPY_AAPL_BAC_PPO_results.csv'
 
-def test_algo(algo_path, env):
+def test_algo(algo_path, env, file_name):
     roi_list = []
     algo = Algorithm.from_checkpoint(algo_path)
 
@@ -33,16 +36,18 @@ def test_algo(algo_path, env):
         obs, reward, done, info = env.step(action)
         episode_reward += reward
         roi_list.append(env.total_roi)
-    return roi_list
+    with open(file_name, 'w', newline="") as f:
+        write = csv.writer(f)
+        write.writerow(roi_list)
 
-with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / 'results.csv', newline='') as f:
+'''with open(Path.home() / 'Git' /  'AlphaStonk' / 'test' / file_name, newline='') as f:
     reader = csv.reader(f)
-    data = list(reader)
+    data = list(reader)'''
 
 def plot_roi_list(roi_list):
     plt.plot([round(float(i), 2) for i in roi_list])
     plt.plot(np.linspace(0, len(test_df), len(test_df)), [(price - test_df['close'].iloc[0]) / test_df['close'].iloc[0] * 100 for price in test_df['close']])
     plt.show()
 
-print(data[0])
-plot_roi_list(data[0])
+if __name__ == "__main__":
+    test_algo(algo_path, env, file_name)
