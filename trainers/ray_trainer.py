@@ -70,7 +70,9 @@ if __name__ == "__main__":
         "PPO", param_space=config.to_dict(), run_config=air.RunConfig(
             stop=stop, 
             verbose=1, 
-            checkpoint_config=air.CheckpointConfig(checkpoint_at_end=True)
+            checkpoint_config=air.CheckpointConfig(checkpoint_score_attribute='episode_reward_mean',
+                                                   checkpoint_score_order='max',
+                                                   num_to_keep=5)
         )
     )
     results = tuner.fit()
