@@ -20,7 +20,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 model_config: ModelConfigDict,
                 name: str,
         ):
-        
+                # num placeholder for CNN output calculation
                 TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
                 nn.Module.__init__(self)
 
