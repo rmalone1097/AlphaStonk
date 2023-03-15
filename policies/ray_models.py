@@ -38,7 +38,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
                 nn.ReLU(),
                 nn.Flatten(),
-                nn.Linear(num, num_outputs)
+                nn.Linear(input_features*num_filters, num_outputs)
         )
         
         @override(TorchModelV2)

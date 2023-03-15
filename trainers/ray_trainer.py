@@ -18,7 +18,9 @@ import ray
 from ray import tune
 from ray.rllib.algorithms.ppo import PPO, PPOConfig
 from ray.tune.registry import get_trainable_cls
+from ray.rllib.models import ModelCatalog
 
+from policies.ray_models import *
 from envs.stock_env import StockEnv
 from utils.data_utils import prepare_state_df
 
@@ -50,6 +52,8 @@ print(obs_train_df)
 
 if __name__ == "__main__":
 
+    ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
+
     ray.init(num_gpus=1)
     args = parser.parse_args()
     config = (
@@ -58,7 +62,11 @@ if __name__ == "__main__":
                                            "obs_df": obs_train_df,
                                            "tickers": tickers})
         .framework(args.framework)
-        .training()
+        .training(
+            model={
+                "custom_model": "simple_cnn"
+            }
+        )
         .rollouts(num_rollout_workers=20)
         .resources(num_gpus=1)
     )
