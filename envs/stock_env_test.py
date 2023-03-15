@@ -1,5 +1,5 @@
-from gym import Env
-from gym.spaces import Discrete, Box, Dict
+from gymnasium import Env
+from gymnasium.spaces import Discrete, Box, Dict
 from typing import Optional
 import datetime
 from ray.rllib.env.env_context import EnvContext
