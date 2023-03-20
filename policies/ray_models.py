@@ -50,6 +50,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 obs_slice = input_dict['obs']['slice']
                 obs_vector = input_dict['obs']['vector']
 
+                obs_slice = torch.permute(obs_slice, (0, 2, 1))
                 cnn_output = self.cnn(obs_slice)
                 logits = self.FC(torch.cat((cnn_output, obs_vector), dim=1))
 
