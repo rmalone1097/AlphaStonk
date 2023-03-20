@@ -25,7 +25,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
                 nn.Module.__init__(self)
 
-                input_rows = obs_space.shape[0]
+                input_rows = 780
                 input_features = 5
                 num_filters = 16
                 vector_length = 21
