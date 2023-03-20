@@ -62,7 +62,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 obs_slice = torch.permute(obs_slice, (0, 2, 1))
                 cnn_output = self.cnn(obs_slice)
                 self._features = self.FC1(torch.cat((cnn_output, obs_vector), dim=1))
-                self._logits = self.FC2(self._features, 1)
+                self._logits = self.FC2(self._features)
 
                 return self._logits, state
         
