@@ -28,7 +28,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 input_rows = 780
                 input_features = 5
                 num_filters = 16
-                vector_length = 21
+                vector_length = 22
 
                 self.cnn = nn.Sequential(
                         nn.Conv1d(input_features, num_filters, kernel_size=7, padding='same'),
