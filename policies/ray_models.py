@@ -29,6 +29,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 input_features = 5
                 num_filters = 16
                 vector_length = 22
+                output_features = 256
 
                 self.cnn = nn.Sequential(
                         nn.Conv1d(input_features, num_filters, kernel_size=7, padding='same'),
@@ -41,9 +42,17 @@ class SimpleCNN(TorchModelV2, nn.Module):
                         nn.ReLU(),
                         nn.Flatten()
                 )
-                self.FC = nn.Sequential(
-                        nn.Linear(input_rows*num_filters + vector_length, num_outputs)
+                self.FC1 = nn.Sequential(
+                        nn.Linear(input_rows*num_filters + vector_length, output_features),
+                        nn.ReLU()
                 )
+                self.FC2 = nn.Sequential(
+                        nn.Linear(output_features, num_outputs)
+                )
+                self.value_net = nn.Sequential(
+                        nn.Linear(output_features, 1)
+                )
+
         
         @override(TorchModelV2)
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
@@ -52,6 +61,13 @@ class SimpleCNN(TorchModelV2, nn.Module):
 
                 obs_slice = torch.permute(obs_slice, (0, 2, 1))
                 cnn_output = self.cnn(obs_slice)
-                logits = self.FC(torch.cat((cnn_output, obs_vector), dim=1))
+                self._features = self.FC1(torch.cat((cnn_output, obs_vector), dim=1))
+                self._logits = self.FC2(self._features, 1)
 
-                return logits, state
+                return self._logits, state
+        
+        @override(TorchModelV2)
+        def value_function(self) -> TensorType:
+                out = self.value_net(self._features).squeeze(1)
+                
+                return out
