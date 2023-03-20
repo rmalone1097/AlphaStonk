@@ -28,23 +28,29 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 input_rows = obs_space.shape[0]
                 input_features = 5
                 num_filters = 16
+                vector_length = 21
 
                 self.cnn = nn.Sequential(
-                nn.Conv1d(input_features, num_filters, kernel_size=7, padding='same'),
-                nn.ReLU(),
-                nn.Conv1d(num_filters, num_filters, kernel_size=5, padding='same'),
-                nn.ReLU(),
-                nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
-                nn.ReLU(),
-                nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
-                nn.ReLU(),
-                nn.Flatten(),
-                nn.Linear(input_features*num_filters, num_outputs)
-        )
+                        nn.Conv1d(input_features, num_filters, kernel_size=7, padding='same'),
+                        nn.ReLU(),
+                        nn.Conv1d(num_filters, num_filters, kernel_size=5, padding='same'),
+                        nn.ReLU(),
+                        nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
+                        nn.ReLU(),
+                        nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
+                        nn.ReLU(),
+                        nn.Flatten()
+                )
+                self.FC = nn.Sequential(
+                        nn.Linear(input_features*num_filters + vector_length, num_outputs)
+                )
         
         @override(TorchModelV2)
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
-                obs = input_dict["obs"].float()
-                logits = self.cnn(obs)
+                obs_slice = input_dict['obs']['slice']
+                obs_vector = input_dict['obs']['vector']
+
+                cnn_output = self.cnn(obs_slice)
+                logits = self.FC(torch.cat((cnn_output, obs_vector), dim=1))
 
                 return logits, state
