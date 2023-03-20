@@ -42,7 +42,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                         nn.Flatten()
                 )
                 self.FC = nn.Sequential(
-                        nn.Linear(input_features*num_filters + vector_length, num_outputs)
+                        nn.Linear(input_rows*num_filters + vector_length, num_outputs)
                 )
         
         @override(TorchModelV2)
