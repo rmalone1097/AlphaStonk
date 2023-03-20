@@ -27,7 +27,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
 
                 input_rows = obs_space.shape[0]
                 input_features = 5
-                num_filters = model_config.get("num_filters")
+                num_filters = 16
 
                 self.cnn = nn.Sequential(
                 nn.Conv1d(input_features, num_filters, kernel_size=7, padding='same'),

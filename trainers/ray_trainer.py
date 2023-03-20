@@ -65,9 +65,6 @@ if __name__ == "__main__":
         .training(
             model={
                 "custom_model": "simple_cnn",
-                "custom_model_config":{
-                    "num_filters":16
-                }
             }
         )
         .rollouts(num_rollout_workers=20)
