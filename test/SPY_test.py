@@ -42,6 +42,11 @@ def test_algo(algo_path, env, roi_file_name, portfolio_file_name):
         obs, reward, done, info = env.step(action)
         episode_reward += reward
         roi_list.append(env.total_roi)
+    
+    with open(roi_file_name, 'w') as f:
+        write = csv.writer(f)
+        write.writerow(roi_list)
+
     return roi_list
 
 def read_csv(path):
