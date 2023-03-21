@@ -72,5 +72,5 @@ def plot_portfolio(portfolio_list):
 
 if __name__ == "__main__":
     test_algo(algo_path, env, roi_file_name, portfolio_file_name)
-    roi_list = read_csv(Path.home() / 'Desktop' / 'SPY_PPO_roi.csv')
-    plot_roi_list(full_test_df, data[0])
+    #roi_list = read_csv(Path.home() / 'Desktop' / 'SPY_PPO_roi.csv')
+    #plot_roi_list(full_test_df, roi_list)
