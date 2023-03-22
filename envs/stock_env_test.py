@@ -208,8 +208,8 @@ class StockEnv(Env):
         # Energy, defined as difference between EMA_25 and EMA_170. Daily candle counter used in reward calculation
         latest_close = self.current_price
         latest_daily_candle = full_slice[-1, 0]
-        latest_energy = full_slice[-1, 6*(self.ticker_number + 1)]
-        latest_ema_25 = full_slice[-1, 15*(self.ticker_number + 1)]
+        latest_energy = full_slice[-1, 16*self.ticker_number + 1]
+        latest_ema_25 = full_slice[-1, 16*self.ticker_number + 10]
         
         # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
         if latest_daily_candle > 120 or latest_daily_candle == 1:
