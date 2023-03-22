@@ -60,14 +60,15 @@ if __name__ == "__main__":
         PPOConfig()
         .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
-                                           "tickers": tickers})
+                                           "tickers": tickers,
+                                           "print": True})
         .framework(args.framework)
         .training(
             model={
                 "custom_model": "simple_cnn",
             }
         )
-        .rollouts(num_rollout_workers=20)
+        .rollouts(num_rollout_workers=1)
         .resources(num_gpus=1)
     )
     stop = {

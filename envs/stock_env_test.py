@@ -83,6 +83,7 @@ class StockEnv(Env):
         | 20(n+1) | latest_ema_360                       | 0    | Inf | dollars ($)  |
         | 21(n+1) | latest_ema_445                       | 0    | Inf | dollars ($)  |
         '''
+        self.print_config = config['print']
         self.tickers = config['tickers']
         # Number of tickers (dfs passed in initialization)
         self.num_tickers = len(self.tickers)
@@ -303,6 +304,19 @@ class StockEnv(Env):
         self.action = action
         self.state_idx = [first_idx, last_idx]
         self.timestep += 1
+
+        if self.print_config:
+            print('Full slice: ', full_slice)
+            print('slice: ', self.state['slice'])
+            print('vector:', self.state['vector'])
+            print('Ticker number: ', self.ticker_number)
+            print('Position value: ', position_value)
+            print('Reward: ', self.reward)
+            print('Latest daily candle: ', latest_daily_candle)
+            print('Latest close: ', latest_close)
+            print('Latest ema 25: ', latest_ema_25)
+            print('Latest energy: ', latest_energy)
+            print('Last data point: ', last_dp)
 
         return self.state, self.reward, done, info
 
