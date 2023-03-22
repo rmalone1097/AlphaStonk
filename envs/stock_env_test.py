@@ -306,6 +306,8 @@ class StockEnv(Env):
         self.timestep += 1
 
         if self.print_config:
+            print('action: ', action)
+            print('position log: ', self.position_log)
             print('Full slice: ', full_slice)
             print('slice: ', self.state['slice'])
             print('vector:', self.state['vector'])
