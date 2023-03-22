@@ -11,8 +11,11 @@ from typing import Optional
 from utils.data_utils import *
 from utils.data_utils import *
 from pathlib import Path
+
 from envs.stock_env_test import StockEnv
+from policies.ray_models import *
 from ray.rllib.algorithms.algorithm import Algorithm
+from ray.rllib.models import ModelCatalog
 
 tickers = ['SPY']
 cande_length = 1
@@ -21,8 +24,7 @@ end_stamp = 1676581140
 data_path = Path.home() / 'Documents' / 'Datasets'
 _, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2206200)
 
-short_df = pd.read_pickle(Path.home() / 'data' / 'SPY_minute_2022-08-22_built.pkl')
-print(short_df)
+ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
 
 env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers})
 algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
