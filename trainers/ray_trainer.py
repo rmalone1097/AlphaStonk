@@ -68,7 +68,7 @@ if __name__ == "__main__":
                 "custom_model": "simple_cnn",
             }
         )
-        .rollouts(num_rollout_workers=1)
+        .rollouts(num_rollout_workers=20)
         .resources(num_gpus=1)
     )
     stop = {
