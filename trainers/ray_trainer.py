@@ -106,6 +106,7 @@ if __name__ == "__main__":
         )
         .rollouts(num_rollout_workers=20)
         .resources(num_gpus=1)
+        .callbacks(MyCallbacks)
     )
     stop = {
         "training_iteration": args.stop_iters,
