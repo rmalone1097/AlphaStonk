@@ -20,7 +20,6 @@ from ray.rllib.algorithms.ppo import PPO, PPOConfig
 from ray.tune.registry import get_trainable_cls
 from ray.rllib.models import ModelCatalog
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
-from ray.rllib.env import StockEnv
 from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
