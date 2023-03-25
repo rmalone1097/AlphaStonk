@@ -21,11 +21,12 @@ from ray.tune.registry import get_trainable_cls
 from ray.rllib.models import ModelCatalog
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.policy import Policy
+from ray.rllib.env import BaseEnv
 from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
 
 from policies.ray_models import *
-from envs.stock_env import StockEnv
+from envs.stock_env import BaseEnv
 from utils.data_utils import prepare_state_df
 
 parser = argparse.ArgumentParser()
@@ -55,16 +56,16 @@ print(full_train_df)
 print(obs_train_df)
 
 class MyCallbacks(DefaultCallbacks):
-    def on_episode_start(self, worker: RolloutWorker, base_env: StockEnv, policies: Dict[str, Policy],episode: MultiAgentEpisode, **kwargs):
+    def on_episode_start(self, worker: RolloutWorker, base_env: BaseEnv, policies: Dict[str, Policy],episode: MultiAgentEpisode, **kwargs):
         print("episode {} started".format(episode.episode_id))
         episode.user_data["total_roi"] = []
         episode.hist_data["total_roi"] = []
 
-    def on_episode_step(self, worker: RolloutWorker, base_env: StockEnv, episode: MultiAgentEpisode, **kwargs):
+    def on_episode_step(self, worker: RolloutWorker, base_env: BaseEnv, episode: MultiAgentEpisode, **kwargs):
         total_roi = abs(base_env.total_roi)
         episode.user_data["total_roi"].append(total_roi)
 
-    def on_episode_end(self, worker: RolloutWorker, base_env: StockEnv, policies: Dict[str, Policy], episode: MultiAgentEpisode, **kwargs):
+    def on_episode_end(self, worker: RolloutWorker, base_env: BaseEnv, policies: Dict[str, Policy], episode: MultiAgentEpisode, **kwargs):
         total_roi = np.mean(episode.user_data["total_roi"])
         print("episode {} ended with length {} and pole angles {}".format(episode.episode_id, episode.length, total_roi))
         
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = (
         PPOConfig()
-        .environment(StockEnv, env_config={"full_df": full_train_df,
+        .environment(BaseEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
                                            "print": True})
