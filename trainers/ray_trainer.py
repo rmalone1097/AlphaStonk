@@ -26,7 +26,7 @@ from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
 
 from policies.ray_models import *
-from envs.stock_env import BaseEnv
+from envs.stock_env import StockEnv
 from utils.data_utils import prepare_state_df
 
 parser = argparse.ArgumentParser()
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = (
         PPOConfig()
-        .environment(BaseEnv, env_config={"full_df": full_train_df,
+        .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
                                            "print": True})
