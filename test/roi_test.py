@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from typing import Optional
-from utils.data_utils import *
-from utils.data_utils import *
+from utils.data_utils import prepare_state_df
 from pathlib import Path
 
 from envs.stock_env_test import StockEnv
@@ -21,15 +20,15 @@ tickers = ['SPY']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
-data_path = Path.home() / 'Documents' / 'Datasets'
+data_path = Path.home() / 'data'
 _, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2206200)
 
 ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
 
-env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers})
-algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
-roi_file_name = 'SPY_AAPL_BAC_PPO_roi.csv'
-portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv'
+#env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers, 'print': False})
+#algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
+roi_file_name = Path.home() / 'ray_results' / 'SPY_AAPL_BAC_PPO_roi.csv'
+#portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv
 
 def test_algo(algo_path, env, roi_file_name, portfolio_file_name):
     roi_list = []
@@ -52,7 +51,7 @@ def test_algo(algo_path, env, roi_file_name, portfolio_file_name):
     return roi_list
 
 def read_csv(path):
-    with open(Path.home() / 'Desktop' / 'SPY_PPO_roi.csv', newline='') as f:
+    with open(Path.home() / 'ray_results' / 'SPY_AAPL_BAC_PPO_roi.csv', newline='') as f:
         reader = csv.reader(f)
         data = list(reader)
     return data[0]
@@ -78,6 +77,6 @@ def plot_portfolio(portfolio_list):
     plt.show()
 
 if __name__ == "__main__":
-    test_algo(algo_path, env, roi_file_name, portfolio_file_name)
-    #roi_list = read_csv(Path.home() / 'Desktop' / 'SPY_PPO_roi.csv')
-    #plot_roi_list(full_test_df, roi_list)
+    #test_algo(algo_path, env, roi_file_name, portfolio_file_name)
+    roi_list = read_csv(Path.home() / 'Desktop' / 'SPY_AAPL_BAC_PPO_roi.csv')
+    plot_roi_list(full_test_df, roi_list)
