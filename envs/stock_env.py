@@ -176,6 +176,8 @@ class StockEnv(Env):
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
 
+        ''' State update block '''
+
         # Step data window 1 candle
         # Fetch first and last index of the window and add 1
         first_idx, last_idx = self.state_idx[0] + 1, self.state_idx[1] + 1
@@ -194,7 +196,9 @@ class StockEnv(Env):
 
         self.state['slice'] = self.obs_df_tensor[first_idx:last_idx, :]
 
-        # Ticker number starting at 0
+        ''' Reward calculation block '''
+
+        # Ticker number starting at 0 of last position (position log)
         self.ticker_number = max(math.floor((self.position_log - 1) / 2), 0)
         self.current_price = self.state['slice'][-1, 5*(self.ticker_number)]
 
@@ -228,10 +232,14 @@ class StockEnv(Env):
                 self.reward = 0
             else:
                 self.reward = -abs(reward)
+        
+        ''' State vector update block '''
 
         vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
+
+        ''' New action update block '''
 
         # Close old position and open new one
         if self.position_log != action:
@@ -275,9 +283,11 @@ class StockEnv(Env):
             elif action == 2:
                 self.shorts += 1
 
-            new_ticker_number = max(math.floor((self.position_log - 1) / 2), 0)
+            new_ticker_number = max(math.floor((action - 1) / 2), 0)
             self.start_price = self.state['slice'][-1, 5*(new_ticker_number)]
             self.holding_time = self.minimum_holding_time
+        
+        ''' Logging calculation block '''
         
         # Count long and short candles
         if action == 1:
