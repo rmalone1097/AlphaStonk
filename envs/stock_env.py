@@ -287,6 +287,19 @@ class StockEnv(Env):
             self.start_price = self.state['slice'][-1, 5*(new_ticker_number)]
             self.holding_time = self.minimum_holding_time
         
+        if self.print_config:
+            print('action: ', action)
+            print('position log: ', self.position_log)
+            print('Ticker number of last position: ', self.ticker_number)
+            print('Position value: ', position_value)
+            print('Reward: ', self.reward)
+            print('Latest daily candle: ', latest_daily_candle)
+            print('Start price: ', self.start_price)
+            print('Latest close: ', latest_close)
+            print('Latest ema 25: ', latest_ema_25)
+            print('Latest energy: ', latest_energy)
+            print('Total ROI: ', self.total_roi)
+        
         ''' Logging calculation block '''
         
         # Count long and short candles
@@ -314,21 +327,6 @@ class StockEnv(Env):
         self.action = action
         self.state_idx = [first_idx, last_idx]
         self.timestep += 1
-
-        if self.print_config:
-            print('action: ', action)
-            print('position log: ', self.position_log)
-            print('Full slice: ', full_slice)
-            print('slice: ', self.state['slice'])
-            print('vector:', self.state['vector'])
-            print('Ticker number: ', self.ticker_number)
-            print('Position value: ', position_value)
-            print('Reward: ', self.reward)
-            print('Latest daily candle: ', latest_daily_candle)
-            print('Latest close: ', latest_close)
-            print('Latest ema 25: ', latest_ema_25)
-            print('Latest energy: ', latest_energy)
-            print('Last data point: ', last_dp)
 
         return self.state, self.reward, done, info
 
