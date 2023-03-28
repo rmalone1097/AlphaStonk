@@ -240,6 +240,21 @@ class StockEnv(Env):
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
 
+        if self.print_config:
+            print('action: ', action)
+            print('position log: ', self.position_log)
+            print('Ticker number of last position: ', self.ticker_number)
+            print('Position value: ', position_value)
+            print('Reward: ', self.reward)
+            print('Latest daily candle: ', latest_daily_candle)
+            print('Start price: ', self.start_price)
+            print('Latest close: ', latest_close)
+            print('Latest ema 25: ', latest_ema_25)
+            print('Latest ema 170', latest_ema_170)
+            print('Latest energy: ', latest_energy)
+            print('Total ROI: ', self.total_roi)
+            print('')
+
         ''' New action update block '''
 
         # Close old position and open new one
@@ -287,20 +302,6 @@ class StockEnv(Env):
             new_ticker_number = max(math.floor((action - 1) / 2), 0)
             self.start_price = self.state['slice'][-1, 5*(new_ticker_number)]
             self.holding_time = self.minimum_holding_time
-        
-        if self.print_config:
-            print('action: ', action)
-            print('position log: ', self.position_log)
-            print('Ticker number of last position: ', self.ticker_number)
-            print('Position value: ', position_value)
-            print('Reward: ', self.reward)
-            print('Latest daily candle: ', latest_daily_candle)
-            print('Start price: ', self.start_price)
-            print('Latest close: ', latest_close)
-            print('Latest ema 25: ', latest_ema_25)
-            print('Latest ema 170', latest_ema_170)
-            print('Latest energy: ', latest_energy)
-            print('Total ROI: ', self.total_roi)
         
         ''' Logging calculation block '''
         
