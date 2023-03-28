@@ -215,6 +215,7 @@ class StockEnv(Env):
         latest_daily_candle = full_slice[-1, 0]
         latest_energy = full_slice[-1, 16*self.ticker_number + 1]
         latest_ema_25 = full_slice[-1, 16*self.ticker_number + 10]
+        latest_ema_170 = full_slice[-1, 16*self.ticker_number + 13]
         
         # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
         if latest_daily_candle > 120 or latest_daily_candle == 1:
@@ -297,6 +298,7 @@ class StockEnv(Env):
             print('Start price: ', self.start_price)
             print('Latest close: ', latest_close)
             print('Latest ema 25: ', latest_ema_25)
+            print('Latest ema 170', latest_ema_170)
             print('Latest energy: ', latest_energy)
             print('Total ROI: ', self.total_roi)
         
