@@ -1,3 +1,5 @@
+''' Very small amount of data/params to test on local machine '''
+
 from typing import Dict, Tuple
 import argparse
 import numpy as np
@@ -40,18 +42,18 @@ parser.add_argument(
     "--stop-iters", type=int, default=6000, help="Number of iterations to train."
 )
 parser.add_argument(
-    "--stop-timesteps", type=int, default=10000000, help="Number of timesteps to train."
+    "--stop-timesteps", type=int, default=1000, help="Number of timesteps to train."
 )
 '''parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-tickers = ['SPY']
+tickers = ['SPY', 'AAPL', '']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
 data_path = Path.home() / 'data'
-full_train_df, obs_train_df, _, _ = prepare_state_df(tickers, data_path, 2206200)
+full_train_df, obs_train_df, _, _ = prepare_state_df(tickers, data_path, 100000)
 print(full_train_df)
 print(obs_train_df)
 
@@ -97,9 +99,9 @@ if __name__ == "__main__":
         .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
-                                           "print": False})
+                                           "print": True})
         .framework(args.framework)
-        .rollouts(num_rollout_workers=27)
+        .rollouts(num_rollout_workers=1)
         .resources(num_gpus=1)
     )
     stop = {
