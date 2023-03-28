@@ -36,11 +36,9 @@ parser.add_argument(
     default="torch",
     help="The DL framework specifier.",
 )
+# 100 million timesteps by default
 parser.add_argument(
-    "--stop-iters", type=int, default=6000, help="Number of iterations to train."
-)
-parser.add_argument(
-    "--stop-timesteps", type=int, default=10000000, help="Number of timesteps to train."
+    "--stop-timesteps", type=int, default=100000000, help="Number of timesteps to train."
 )
 '''parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
@@ -103,7 +101,6 @@ if __name__ == "__main__":
         .resources(num_gpus=1)
     )
     stop = {
-        "training_iteration": args.stop_iters,
         "timesteps_total" : args.stop_timesteps
     }
     tuner = tune.Tuner(
