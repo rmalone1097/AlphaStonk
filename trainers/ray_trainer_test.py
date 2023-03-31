@@ -34,8 +34,8 @@ from utils.data_utils import prepare_state_df
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--framework",
-    choices=["torch"],
-    default="torch",
+    choices=["torch", "tf2"],
+    default="tf2",
     help="The DL framework specifier.",
 )
 parser.add_argument(
@@ -48,7 +48,7 @@ parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-tickers = ['SPY', 'AAPL', '']
+tickers = ['SPY', 'AAPL', 'BAC']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
@@ -89,8 +89,6 @@ class MyCallbacks(DefaultCallbacks):
         episode.custom_metrics["num_batches"] += 1
 
 if __name__ == "__main__":
-
-    ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
 
     ray.init(num_gpus=1)
     args = parser.parse_args()
