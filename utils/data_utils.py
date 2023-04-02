@@ -385,13 +385,24 @@ def plot_df_slice(df, starting_index=0, ending_index=30):
         mpf.make_addplot(df['ema_100_day'].iloc[starting_index:ending_index], panel=0)]
     mpf.plot(df.iloc[starting_index:ending_index], type='candle', addplot=taplots)
 
-def plot_energy_cloud(df, starting_index=0, ending_index=30):
+def plot_energy_cloud(ticker, df, starting_index=0, ending_index=30):
     taplots = []
     long_rewards = [0]
     short_rewards = [0]
     zero_rewards = [0]
     energies = [0]
     df_slice = df.iloc[starting_index:ending_index]
+    df_slice['Date'] = df_slice.index
+    df_slice.index.names = ['Date']
+
+    df_slice = df_slice.rename(columns={ticker+"_close": "close",
+                                        ticker+"_open": "open",
+                                        ticker+"_high": "high",
+                                        ticker+"_low": "low",
+                                        ticker+"_ema_25": "ema_25",
+                                        ticker+"_ema_170": "ema_170"})
+
+    print(df_slice)
 
     for i, row in tqdm(enumerate(df_slice.itertuples(index=False)), total=len(df)):
         if i != 0:
@@ -426,4 +437,4 @@ def plot_energy_cloud(df, starting_index=0, ending_index=30):
         mpf.make_addplot(df_slice['short_reward'], panel=1, color='red'),
         mpf.make_addplot(df_slice['zero_reward'], panel=2, ylabel='Zero Reward'),
         mpf.make_addplot(df_slice['energy'], panel=3, color='orange', ylabel='Energy')]
-    mpf.plot(df.iloc[starting_index:ending_index], type='candle', addplot=taplots)
+    mpf.plot(df_slice, type='candle', addplot=taplots)

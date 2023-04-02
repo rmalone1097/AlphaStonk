@@ -99,6 +99,11 @@ if __name__ == "__main__":
         .framework(args.framework)
         .rollouts(num_rollout_workers=27)
         .resources(num_gpus=1)
+        .training(
+            model={
+                "custom_model": "simple_cnn"
+            }
+        )
     )
     stop = {
         "timesteps_total" : args.stop_timesteps
