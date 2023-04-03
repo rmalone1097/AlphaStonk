@@ -42,15 +42,23 @@ class SimpleCNN(TorchModelV2, nn.Module):
                         nn.ReLU(),
                         nn.Flatten()
                 )
-                self.FC1 = nn.Sequential(
-                        nn.Linear(input_rows*num_filters + vector_length, output_features),
-                        nn.ReLU()
+                self.FC_slice = nn.Sequential(
+                        nn.Linear(input_rows*num_filters, output_features),
+                        nn.Tanh(),
+                        nn.Linear(output_features, output_features),
+                        nn.Tanh()
                 )
-                self.FC2 = nn.Sequential(
-                        nn.Linear(output_features, num_outputs)
+                self.FC_vector = nn.Sequential(
+                        nn.Linear(vector_length, output_features),
+                        nn.Tanh(),
+                        nn.Linear(output_features, output_features),
+                        nn.Tanh()
+                )
+                self.logits_net = nn.Sequential(
+                        nn.Linear(output_features*2, 3)
                 )
                 self.value_net = nn.Sequential(
-                        nn.Linear(output_features, 1)
+                        nn.Linear(output_features*2, 1)
                 )
 
         
@@ -59,10 +67,11 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 obs_slice = input_dict['obs']['slice']
                 obs_vector = input_dict['obs']['vector']
 
-                obs_slice = torch.permute(obs_slice, (0, 2, 1))
-                cnn_output = self.cnn(obs_slice)
-                self._features = self.FC1(torch.cat((cnn_output, obs_vector), dim=1))
-                self._logits = self.FC2(self._features)
+                obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
+                slice_output = self.FC_slice(self.cnn(obs_slice))
+                vector_output = self.FC_vector(input_dict['obs']['vector'])
+                self._features = torch.cat((slice_output, vector_output), dim=1)
+                self._logits = self.logits_net(self._features)
 
                 return self._logits, state
         
