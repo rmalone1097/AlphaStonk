@@ -35,7 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--framework",
     choices=["torch", "tf2"],
-    default="tf2",
+    default="torch",
     help="The DL framework specifier.",
 )
 parser.add_argument(
@@ -48,7 +48,7 @@ parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-tickers = ['SPY', 'AAPL', 'BAC']
+tickers = ['SPY']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
@@ -90,6 +90,8 @@ class MyCallbacks(DefaultCallbacks):
 
 if __name__ == "__main__":
 
+    ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
+
     ray.init(num_gpus=1)
     args = parser.parse_args()
     config = (
@@ -97,7 +99,7 @@ if __name__ == "__main__":
         .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
-                                           "print": True})
+                                           "print": False})
         .framework(args.framework)
         .rollouts(num_rollout_workers=1)
         .resources(num_gpus=1)
