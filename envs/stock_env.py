@@ -217,22 +217,15 @@ class StockEnv(Env):
         latest_ema_25 = full_slice[-1, 16*self.ticker_number + 10]
         latest_ema_170 = full_slice[-1, 16*self.ticker_number + 13]
         
-        # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
-        if latest_daily_candle > 120 or latest_daily_candle == 1:
-            reward = latest_energy + ((latest_close - latest_ema_25) / latest_ema_25 * 250)
-        else:
-            reward = (latest_close - latest_ema_25) / latest_ema_25 * 250
+        # Percent change for current candle
+        last_close = self.state['slice'][-2, 5*(self.ticker_number)]
+        reward = (latest_close - last_close) / last_close * 100
         
         # Reward setting
         if self.position_log == 1:
             self.reward = reward
         elif self.position_log == 2:
             self.reward = -reward
-        elif self.position_log == 0:
-            if abs(reward) <= 0.4 or latest_daily_candle < 15:
-                self.reward = 0
-            else:
-                self.reward = -abs(reward)
         
         ''' State vector update block '''
 
