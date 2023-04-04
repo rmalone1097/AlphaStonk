@@ -226,6 +226,8 @@ class StockEnv(Env):
             self.reward = reward
         elif self.position_log == 2:
             self.reward = -reward
+        elif self.position_log == 0:
+            self.reward = 0
         
         ''' State vector update block '''
 
