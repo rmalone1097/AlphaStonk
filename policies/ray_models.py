@@ -1,5 +1,6 @@
 import numpy as np
 import gymnasium as gym
+from policies.wensi import *
 
 from ray.rllib.utils.typing import Dict, TensorType, List, ModelConfigDict
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
@@ -80,3 +81,44 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 out = self.value_net(self._features).squeeze(1)
                 
                 return out
+
+class osCNN(TorchModelV2, nn.Module):
+        def __init__(
+                self,
+                obs_space: gym.spaces.Space,
+                action_space: gym.spaces.Space,
+                num_outputs: int,
+                model_config: ModelConfigDict,
+                name: str
+        ):
+                print('Using osCNN policy')
+                TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
+                nn.Module.__init__(self)
+
+                input_rows = 780
+                input_features = 5
+                vector_length = 22
+                output_features = 256
+                start_kernel_size = 1
+                max_kernel_size = 197
+                quarter_or_half = 4
+                parameter_starter = 37
+
+                parameter_number_of_layer_list = [parameter_starter*128,parameter_starter*128*256]
+                receptive_field_shape= min(int(input_rows/quarter_or_half),max_kernel_size)
+                layer_parameter_list = generate_layer_parameter_list(start_kernel_size,receptive_field_shape,parameter_number_of_layer_list,in_channel = 1)
+
+                self.os_cnn = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, output_features, input_features, True)
+
+                self.FC_vector = nn.Sequential(
+                        nn.Linear(vector_length, output_features),
+                        nn.Tanh(),
+                        nn.Linear(output_features, output_features),
+                        nn.Tanh()
+                )
+                self.logits_net = nn.Sequential(
+                        nn.Linear(output_features*2, 3)
+                )
+                self.value_net = nn.Sequential(
+                        nn.Linear(output_features*2, 1)
+                )
