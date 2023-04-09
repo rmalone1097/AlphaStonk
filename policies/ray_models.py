@@ -108,8 +108,14 @@ class osCNN(TorchModelV2, nn.Module):
                 receptive_field_shape= min(int(input_rows/quarter_or_half),max_kernel_size)
                 layer_parameter_list = generate_layer_parameter_list(start_kernel_size,receptive_field_shape,parameter_number_of_layer_list,in_channel = 1)
 
+                # Input to OS CNN has 5 features per stock
                 self.os_cnn = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, output_features, input_features, True)
-
+                '''self.FC_slice = nn.Sequential(
+                        nn.Linear(input_rows*num_filters, output_features),
+                        nn.Tanh(),
+                        nn.Linear(output_features, output_features),
+                        nn.Tanh()
+                )'''
                 self.FC_vector = nn.Sequential(
                         nn.Linear(vector_length, output_features),
                         nn.Tanh(),
@@ -122,3 +128,14 @@ class osCNN(TorchModelV2, nn.Module):
                 self.value_net = nn.Sequential(
                         nn.Linear(output_features*2, 1)
                 )
+        
+        @override(TorchModelV2)
+        def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
+                obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
+                slice_output = self.os_cnn(obs_slice)
+
+        @override(TorchModelV2)
+        def value_function(self) -> TensorType:
+                out = self.value_net(self._features).squeeze(1)
+                
+                return out
