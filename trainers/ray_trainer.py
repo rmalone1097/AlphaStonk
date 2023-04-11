@@ -87,6 +87,7 @@ class MyCallbacks(DefaultCallbacks):
 if __name__ == "__main__":
 
     ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
+    ModelCatalog.register_custom_model("os_cnn", osCNN)
 
     ray.init(num_gpus=1)
     args = parser.parse_args()
@@ -101,7 +102,7 @@ if __name__ == "__main__":
         .resources(num_gpus=1)
         .training(
             model={
-                "custom_model": "simple_cnn"
+                "custom_model": "os_cnn"
             }
         )
     )
