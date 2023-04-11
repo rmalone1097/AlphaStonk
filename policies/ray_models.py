@@ -98,24 +98,26 @@ class osCNN(TorchModelV2, nn.Module):
                 input_rows = 780
                 input_features = 5
                 vector_length = 22
-                output_features = 256
+                output_os_features = 256
                 start_kernel_size = 1
                 max_kernel_size = 197
                 quarter_or_half = 4
                 parameter_starter = 37
+
+                output_features = 256
 
                 parameter_number_of_layer_list = [parameter_starter*128,parameter_starter*128*256]
                 receptive_field_shape= min(int(input_rows/quarter_or_half),max_kernel_size)
                 layer_parameter_list = generate_layer_parameter_list(start_kernel_size,receptive_field_shape,parameter_number_of_layer_list,in_channel = 1)
 
                 # Input to OS CNN has 5 features per stock
-                self.os_cnn = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, output_features, input_features, True)
-                '''self.FC_slice = nn.Sequential(
-                        nn.Linear(input_rows*num_filters, output_features),
+                self.os_cnn = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, output_os_features, input_features, True)
+                self.FC_slice = nn.Sequential(
+                        nn.Linear(output_os_features, output_features),
                         nn.Tanh(),
                         nn.Linear(output_features, output_features),
                         nn.Tanh()
-                )'''
+                )
                 self.FC_vector = nn.Sequential(
                         nn.Linear(vector_length, output_features),
                         nn.Tanh(),
@@ -133,6 +135,11 @@ class osCNN(TorchModelV2, nn.Module):
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
                 obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
                 slice_output = self.os_cnn(obs_slice)
+                vector_output = self.FC_vector(input_dict['obs']['vector'])
+                self._features = torch.cat((slice_output, vector_output), dim=1)
+                self._logits = self.logits_net(self._features)
+
+                return self._logits, state
 
         @override(TorchModelV2)
         def value_function(self) -> TensorType:
