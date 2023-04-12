@@ -104,7 +104,7 @@ class osCNN(TorchModelV2, nn.Module):
                 max_kernel_size = 197
                 quarter_or_half = 4
                 parameter_starter = 37
-                self.num_tickers = 3
+                self.num_tickers = 1
 
                 output_features = 256
 
