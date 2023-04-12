@@ -49,7 +49,7 @@ cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
 data_path = Path.home() / 'data'
-full_train_df, obs_train_df, _, _ = prepare_state_df(tickers, data_path, 2206200)
+full_train_df, obs_train_df, _, _ = prepare_state_df(tickers, data_path, 1000000, 100000, from_beginning=False)
 print(full_train_df)
 print(obs_train_df)
 
