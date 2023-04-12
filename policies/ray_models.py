@@ -98,13 +98,13 @@ class osCNN(TorchModelV2, nn.Module):
                 # Hard coding these for now, will have to make dynamic at some point
                 input_rows = 780
                 self.input_features = 5
-                vector_length = 22
+                self.num_tickers = 3
+                vector_length = 6 + 16*self.num_tickers
                 output_os_features = 256
                 start_kernel_size = 1
                 max_kernel_size = 197
                 quarter_or_half = 4
                 parameter_starter = 37
-                self.num_tickers = 1
 
                 output_features = 256
 
@@ -127,10 +127,10 @@ class osCNN(TorchModelV2, nn.Module):
                         nn.Tanh()
                 )
                 self.logits_net = nn.Sequential(
-                        nn.Linear(output_features*2, 3)
+                        nn.Linear(output_features+output_features*self.num_tickers, 3)
                 )
                 self.value_net = nn.Sequential(
-                        nn.Linear(output_features*2, 1)
+                        nn.Linear(output_features+output_features*self.num_tickers, 1)
                 )
         
         @override(TorchModelV2)
