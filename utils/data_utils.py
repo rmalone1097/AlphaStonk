@@ -338,7 +338,8 @@ def add_indicators(ticker, df):
     return trading_df.fillna(0)
 
 # Returns full train df, obs train df used for state slice, full test df, obs test df used for state slice
-def prepare_state_df(tickers, data_path, train_dps:int):
+# If from beginning is true, training data will always start at row 0. If false, training data will start at len(dataset) - training_dps
+def prepare_state_df(tickers, data_path, train_dps:int, test_dps:int, from_beginning:bool):
     df_list = []
     column_list = []
     obs_df_list = []
@@ -362,7 +363,16 @@ def prepare_state_df(tickers, data_path, train_dps:int):
 
     obs_df = pd.DataFrame(np.concatenate((obs_df_list), axis=1), columns=obs_column_list)
 
-    return full_df.iloc[0:train_dps, :], obs_df.iloc[0:train_dps, :], full_df.iloc[train_dps:len(df)-1, :], obs_df.iloc[train_dps:len(df)-1, :]
+    if from_beginning:
+        start_idx = len(full_df) - train_dps - test_dps - 1
+        end_idx = start_idx + train_dps
+    else:
+        start_idx = 0
+        end_idx = train_dps
+
+    assert start_idx + train_dps + test_dps <= len(full_df), 'Rows selected for training/testing data exceed amount of rows in the dataset'
+
+    return full_df.iloc[start_idx:end_idx, :], obs_df.iloc[start_idx:end_idx, :], full_df.iloc[end_idx:end_idx+test_dps, :], obs_df.iloc[end_idx:end_idx+test_dps, :]
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
