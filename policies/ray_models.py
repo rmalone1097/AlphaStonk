@@ -95,14 +95,16 @@ class osCNN(TorchModelV2, nn.Module):
                 TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
                 nn.Module.__init__(self)
 
+                # Hard coding these for now, will have to make dynamic at some point
                 input_rows = 780
-                input_features = 5
+                self.input_features = 5
                 vector_length = 22
                 output_os_features = 256
                 start_kernel_size = 1
                 max_kernel_size = 197
                 quarter_or_half = 4
                 parameter_starter = 37
+                self.num_tickers = 3
 
                 output_features = 256
 
@@ -111,7 +113,7 @@ class osCNN(TorchModelV2, nn.Module):
                 layer_parameter_list = generate_layer_parameter_list(start_kernel_size,receptive_field_shape,parameter_number_of_layer_list,in_channel = 1)
 
                 # Input to OS CNN has 5 features per stock
-                self.os_cnn = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, output_os_features, input_features, True)
+                self.os_cnn = OS_CNN(parameter_number_of_layer_list, layer_parameter_list, output_os_features, self.input_features, True)
                 self.FC_slice = nn.Sequential(
                         nn.Linear(output_os_features, output_features),
                         nn.Tanh(),
@@ -133,10 +135,17 @@ class osCNN(TorchModelV2, nn.Module):
         
         @override(TorchModelV2)
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
+                # Batch, length, channel
                 obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
-                slice_output = self.os_cnn(obs_slice)
+
+                slice_out_list = []
+                # Iterate through tickers and run separate slices through os_cnn
+                for i in range(self.num_tickers):
+                        slice_out_list.append(self.os_cnn(obs_slice[:, :, i*self.input_features:(i+1)*self.input_features]))
+                slices_output = torch.cat((slice_out_list), dim=1)
+
                 vector_output = self.FC_vector(input_dict['obs']['vector'])
-                self._features = torch.cat((slice_output, vector_output), dim=1)
+                self._features = torch.cat((slices_output, vector_output), dim=1)
                 self._logits = self.logits_net(self._features)
 
                 return self._logits, state
