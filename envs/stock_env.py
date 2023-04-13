@@ -222,10 +222,10 @@ class StockEnv(Env):
         # Reward setting
         if self.position_log % 2 == 1:
             self.reward = reward
-        elif self.position_log % 2 == 0:
-            self.reward = -reward
         elif self.position_log == 0:
             self.reward = 0
+        elif self.position_log % 2 == 0:
+            self.reward = -reward
         
         ''' State vector update block '''
 
@@ -263,9 +263,9 @@ class StockEnv(Env):
 
             self.episode_roi += self.roi
 
-            if self.position_log == 1:
+            if self.position_log % 2 == 1:
                 self.long_roi += self.roi
-            elif self.position_log == 2:
+            elif self.position_log % 2 == 0 and self.position_log != 0:
                 self.short_roi += self.roi
 
             # Agent closed position so position value is final. Can be used to tally win/loss
@@ -288,9 +288,9 @@ class StockEnv(Env):
                 last_idx += self.minimum_holding_time'''
             
             # Count longs and shorts
-            if action == 1:
+            if action % 2 == 1:
                 self.longs += 1
-            elif action == 2:
+            elif action % 2 == 0 and action != 0:
                 self.shorts += 1
 
             new_ticker_number = max(math.floor((action - 1) / 2), 0)
@@ -300,12 +300,12 @@ class StockEnv(Env):
         ''' Logging calculation block '''
         
         # Count long and short candles
-        if action == 1:
+        if action % 2 == 1:
             self.long_candles += 1
-        elif action == 2:
-            self.short_candles += 1
         elif action == 0:
             self.zeros += 1
+        elif action % 2 == 0:
+            self.short_candles += 1
 
         if action != 0:
             self.holding_time += 1
