@@ -26,7 +26,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
                 nn.Module.__init__(self)
 
-                self.num_tickers = 1
+                self.num_tickers = 3
                 input_rows = 780
                 self.input_features = 5
                 num_filters = 16
@@ -67,11 +67,12 @@ class SimpleCNN(TorchModelV2, nn.Module):
         @override(TorchModelV2)
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
                 obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
+                print(obs_slice.shape)
 
                 slice_out_list = []
                 # Iterate through tickers and run separate slices through os_cnn
                 for i in range(self.num_tickers):
-                        slice_out_list.append(self.FC_slice(self.cnn(obs_slice[:, :, i*self.input_features:(i+1)*self.input_features])))
+                        slice_out_list.append(self.FC_slice(self.cnn(obs_slice[:, i*self.input_features:(i+1)*self.input_features, :])))
                 slices_output = torch.cat((slice_out_list), dim=1)
 
                 vector_output = self.FC_vector(input_dict['obs']['vector'])
@@ -139,13 +140,13 @@ class osCNN(TorchModelV2, nn.Module):
         
         @override(TorchModelV2)
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
-                # Batch, length, channel
+                # Batch, channel, length
                 obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
 
                 slice_out_list = []
                 # Iterate through tickers and run separate slices through os_cnn
                 for i in range(self.num_tickers):
-                        slice_out_list.append(self.os_cnn(obs_slice[:, :, i*self.input_features:(i+1)*self.input_features]))
+                        slice_out_list.append(self.os_cnn(obs_slice[:, i*self.input_features:(i+1)*self.input_features, :]))
                 slices_output = torch.cat((slice_out_list), dim=1)
 
                 vector_output = self.FC_vector(input_dict['obs']['vector'])

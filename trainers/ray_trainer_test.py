@@ -105,7 +105,7 @@ if __name__ == "__main__":
         .rollouts(num_rollout_workers=1)
         .resources(num_gpus=1)
         .training(model={
-            "custom_model": "os_cnn"
+            "custom_model": "simple_cnn"
         })
     )
     stop = {
