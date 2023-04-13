@@ -222,9 +222,9 @@ class StockEnv(Env):
         reward = (latest_close - last_close) / last_close * 100
         
         # Reward setting
-        if self.position_log == 1:
+        if self.position_log % 2 == 1:
             self.reward = reward
-        elif self.position_log == 2:
+        elif self.position_log % 2 == 0:
             self.reward = -reward
         elif self.position_log == 0:
             self.reward = 0
@@ -234,6 +234,7 @@ class StockEnv(Env):
         vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
+        print(self.state['slice'])
 
         if self.print_config:
             print('action: ', action)
