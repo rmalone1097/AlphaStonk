@@ -27,6 +27,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 nn.Module.__init__(self)
 
                 self.num_tickers = 3
+                logit_count = 1 + 2*self.num_tickers
                 input_rows = 780
                 self.input_features = 5
                 num_filters = 16
@@ -57,7 +58,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                         nn.Tanh()
                 )
                 self.logits_net = nn.Sequential(
-                        nn.Linear(output_features+output_features*self.num_tickers, 3)
+                        nn.Linear(output_features+output_features*self.num_tickers, logit_count)
                 )
                 self.value_net = nn.Sequential(
                         nn.Linear(output_features+output_features*self.num_tickers, 1)
@@ -104,6 +105,7 @@ class osCNN(TorchModelV2, nn.Module):
                 input_rows = 780
                 self.input_features = 5
                 self.num_tickers = 3
+                logit_count = 1 + 2*self.num_tickers
                 vector_length = 6 + 16*self.num_tickers
                 output_os_features = 256
                 start_kernel_size = 1
@@ -132,7 +134,7 @@ class osCNN(TorchModelV2, nn.Module):
                         nn.Tanh()
                 )
                 self.logits_net = nn.Sequential(
-                        nn.Linear(output_features+output_features*self.num_tickers, 3)
+                        nn.Linear(output_features+output_features*self.num_tickers, logit_count)
                 )
                 self.value_net = nn.Sequential(
                         nn.Linear(output_features+output_features*self.num_tickers, 1)
