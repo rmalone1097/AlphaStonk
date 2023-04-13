@@ -59,7 +59,7 @@ class StockEnv(Env):
         Vector is a 'ndarray' with shape '(6 + 16n,)' where n is the number of tickers and the elements correspond to the following:
         | Num     | Observation                          | Min  | Max | Unit         |
         |---------|--------------------------------------|------|-----|--------------|
-        | 0       | portfolio_value                      | -Inf | Inf | dollars ($)  |
+        | 0       | episode_roi                          | -Inf | Inf | dollars ($)  |
         | 1       | position_log                         | 0    | 2   | discrete     |
         | 2       | action_taken                         | 0    | 2   | discrete     |
         | 3       | start_price                          | 0    | Inf | dollars ($)  |
@@ -169,9 +169,7 @@ class StockEnv(Env):
         # Episode length. Should be rollout length (for algos with rollout) * some scalar
         self.ep_timesteps = 2048 * 5
         # Tracks net worth to put in vector (Markov property?)
-        self.portfolio = 0
-        # For use in portfolio calculation
-        self.transaction_value = 1000
+        self.episode_roi = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -231,7 +229,7 @@ class StockEnv(Env):
         
         ''' State vector update block '''
 
-        vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
+        vector = np.array([self.episode_roi, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
         print(self.state['slice'])
@@ -263,7 +261,7 @@ class StockEnv(Env):
             self.roi = position_value
             self.total_roi += self.roi
 
-            self.portfolio += max(self.transaction_value, self.portfolio) * (self.roi / 100)
+            self.episode_roi += self.roi
 
             if self.position_log == 1:
                 self.long_roi += self.roi
@@ -348,7 +346,7 @@ class StockEnv(Env):
         self.num_positions = 1
         self.position_log = 0
         self.total_holding_time = 0
-        self.portfolio = 0
+        self.episode_roi = 0
 
         # Finds random point in the data to start from
         start_idx = random.randrange(self.num_data - self.ep_timesteps - self.window_days * 390 - 1)
