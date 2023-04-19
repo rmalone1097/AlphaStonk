@@ -172,6 +172,7 @@ class StockEnv(Env):
         self.portfolio = 0
         # For use in portfolio calculation
         self.transaction_value = 1000
+        self.episode_roi = 0
 
     def step(self, action):
         assert self.state is not None, "Call reset before using step method"
@@ -194,7 +195,9 @@ class StockEnv(Env):
 
         self.state['slice'] = self.obs_df_tensor[first_idx:last_idx, :]
 
-        # Ticker number starting at 0
+        ''' Reward calculation block '''
+
+        # Ticker number starting at 0 of last position (position log)
         self.ticker_number = max(math.floor((self.position_log - 1) / 2), 0)
         self.current_price = self.state['slice'][-1, 5*(self.ticker_number)]
 
@@ -211,27 +214,43 @@ class StockEnv(Env):
         latest_daily_candle = full_slice[-1, 0]
         latest_energy = full_slice[-1, 16*self.ticker_number + 1]
         latest_ema_25 = full_slice[-1, 16*self.ticker_number + 10]
+        latest_ema_170 = full_slice[-1, 16*self.ticker_number + 13]
         
-        # Reward calculation, defined as energy + slope of EMA_25 with some additional weight
-        if latest_daily_candle > 120 or latest_daily_candle == 1:
-            reward = latest_energy + ((latest_close - latest_ema_25) / latest_ema_25 * 250)
-        else:
-            reward = (latest_close - latest_ema_25) / latest_ema_25 * 250
+        # Percent change for current candle
+        last_close = self.state['slice'][-2, 5*(self.ticker_number)]
+        reward = (latest_close - last_close) / last_close * 100
         
         # Reward setting
-        if self.position_log == 1:
+        if self.position_log % 2 == 1:
             self.reward = reward
-        elif self.position_log == 2:
-            self.reward = -reward
         elif self.position_log == 0:
-            if abs(reward) <= 0.4 or latest_daily_candle < 15:
-                self.reward = 0
-            else:
-                self.reward = -abs(reward)
+            self.reward = 0
+        elif self.position_log % 2 == 0:
+            self.reward = -reward
+        
+        ''' State vector update block '''
 
-        vector = np.array([self.portfolio, self.position_log, action, self.start_price, self.holding_time])
+        vector = np.array([self.episode_roi, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
+        print(self.state['slice'])
+
+        if self.print_config:
+            print('action: ', action)
+            print('position log: ', self.position_log)
+            print('Ticker number of last position: ', self.ticker_number)
+            print('Position value: ', position_value)
+            print('Reward: ', self.reward)
+            print('Latest daily candle: ', latest_daily_candle)
+            print('Start price: ', self.start_price)
+            print('Latest close: ', latest_close)
+            print('Latest ema 25: ', latest_ema_25)
+            print('Latest ema 170', latest_ema_170)
+            print('Latest energy: ', latest_energy)
+            print('Total ROI: ', self.total_roi)
+            print('')
+
+        ''' New action update block '''
 
         # Close old position and open new one
         if self.position_log != action:
@@ -242,12 +261,12 @@ class StockEnv(Env):
             # Calcualte final ROI and update total
             self.roi = position_value
             self.total_roi += self.roi
-            
-            self.portfolio += max(self.transaction_value, self.portfolio) * (self.roi / 100)
 
-            if self.position_log == 1:
+            self.episode_roi += self.roi
+
+            if self.position_log % 2 == 1:
                 self.long_roi += self.roi
-            elif self.position_log == 2:
+            elif self.position_log % 2 == 0 and self.position_log != 0:
                 self.short_roi += self.roi
 
             # Agent closed position so position value is final. Can be used to tally win/loss
@@ -270,22 +289,24 @@ class StockEnv(Env):
                 last_idx += self.minimum_holding_time'''
             
             # Count longs and shorts
-            if action == 1:
+            if action % 2 == 1:
                 self.longs += 1
-            elif action == 2:
+            elif action % 2 == 0 and action != 0:
                 self.shorts += 1
 
-            new_ticker_number = max(math.floor((self.position_log - 1) / 2), 0)
+            new_ticker_number = max(math.floor((action - 1) / 2), 0)
             self.start_price = self.state['slice'][-1, 5*(new_ticker_number)]
             self.holding_time = self.minimum_holding_time
         
+        ''' Logging calculation block '''
+        
         # Count long and short candles
-        if action == 1:
+        if action % 2 == 1:
             self.long_candles += 1
-        elif action == 2:
-            self.short_candles += 1
         elif action == 0:
             self.zeros += 1
+        elif action % 2 == 0:
+            self.short_candles += 1
 
         if action != 0:
             self.holding_time += 1
@@ -304,21 +325,6 @@ class StockEnv(Env):
         self.action = action
         self.state_idx = [first_idx, last_idx]
         self.timestep += 1
-
-        if self.print_config:
-            print('action: ', action)
-            print('position log: ', self.position_log)
-            print('Full slice: ', full_slice)
-            print('slice: ', self.state['slice'])
-            print('vector:', self.state['vector'])
-            print('Ticker number: ', self.ticker_number)
-            print('Position value: ', position_value)
-            print('Reward: ', self.reward)
-            print('Latest daily candle: ', latest_daily_candle)
-            print('Latest close: ', latest_close)
-            print('Latest ema 25: ', latest_ema_25)
-            print('Latest energy: ', latest_energy)
-            print('Last data point: ', last_dp)
 
         return self.state, self.reward, done, info
 
