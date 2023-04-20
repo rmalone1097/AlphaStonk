@@ -103,7 +103,7 @@ if __name__ == "__main__":
         .resources(num_gpus=1)
         .training(
             model={
-                "custom_model": "os_cnn"
+                "custom_model": "simple_cnn"
             }
         )
     )
