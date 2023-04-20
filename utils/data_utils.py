@@ -321,19 +321,22 @@ def add_indicators(ticker, df):
     trading_df[ticker + '_ema_250'] = ta.ema(trading_df[ticker + '_close'], length=250)
     trading_df[ticker + '_ema_360'] = ta.ema(trading_df[ticker + '_close'], length=360)
     trading_df[ticker + '_ema_445'] = ta.ema(trading_df[ticker + '_close'], length=445) 
-    #trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
-    #trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
+    trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
+    trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
+
+    #day length ema (5, 10, 20, 50, 100)
+    trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
+    trading_df['ema_10_day'] = ta.ema(trading_df['close'], length=10*390)
+    trading_df['ema_20_day'] = ta.ema(trading_df['close'], length=20*390)
+    trading_df['ema_50_day'] = ta.ema(trading_df['close'], length=50*390)
+    trading_df['ema_100_day'] = ta.ema(trading_df['close'], length=100*390)
+
+    # Miscellaneous indicators 
+    trading_df[ticker + '_vwap'] = ta.vwap(trading_df[ticker + '_high'], trading_df[ticker + '_low'],trading_df[ticker + '_close'], trading_df[ticker + '_volume'], anchor='D')
 
     trading_df[ticker + '_energy'] = (trading_df[ticker + '_ema_25'] - trading_df[ticker + '_ema_170']) / trading_df[ticker + '_ema_170'] * 100
     energy = trading_df.pop(ticker + '_energy')
     trading_df.insert(0, ticker + '_energy', energy)
-
-    #day length ema (5, 10, 20, 50, 100)
-    #trading_df['ema_5_day'] = ta.ema(trading_df['close'], length=5*390)
-    #trading_df['ema_10_day'] = ta.ema(trading_df['close'], length=10*390)
-    #trading_df['ema_20_day'] = ta.ema(trading_df['close'], length=20*390)
-    #trading_df['ema_50_day'] = ta.ema(trading_df['close'], length=50*390)
-    #trading_df['ema_100_day'] = ta.ema(trading_df['close'], length=100*390)
 
     return trading_df.fillna(0)
 

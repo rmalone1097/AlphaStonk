@@ -100,7 +100,7 @@ if __name__ == "__main__":
         .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
-                                           "print": True,
+                                           "print": False,
                                            "rew_function": 'energy'})
         .framework(args.framework)
         .rollouts(num_rollout_workers=1)
