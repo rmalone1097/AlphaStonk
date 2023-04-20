@@ -91,6 +91,8 @@ class StockEnv(Env):
         self.full_df = config['full_df']
         # Obs df is only columns used in state slice
         self.obs_df = config['obs_df']
+        # Reward config, either "simple" or "energy"
+        self.rew_function = config['rew_function']
         self.action_space = Discrete(1 + 2*self.num_tickers)
         # Window width of data slice per step (days)
         self.window_days = 2
@@ -217,8 +219,14 @@ class StockEnv(Env):
         
         # Percent change for current candle
         last_close = self.state['slice'][-2, 5*(self.ticker_number)]
-        reward = (latest_close - last_close) / last_close * 100
-        
+        if self.rew_function == 'simple':
+            reward = (latest_close - last_close) / last_close * 100
+        elif self.rew_function == 'energy':
+            if latest_daily_candle > 120 or latest_daily_candle == 1:
+                reward = latest_energy + ((latest_close - latest_ema_25) / latest_ema_25 * 250)
+            else:
+                reward = (latest_close - latest_ema_25) / latest_ema_25 * 250
+
         # Reward setting
         if self.position_log % 2 == 1:
             self.reward = reward

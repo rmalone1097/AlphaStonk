@@ -48,7 +48,7 @@ parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-tickers = ['SPY', 'AAPL', 'BAC']
+tickers = ['SPY']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
@@ -100,7 +100,8 @@ if __name__ == "__main__":
         .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
-                                           "print": True})
+                                           "print": True,
+                                           "rew_function": 'energy'})
         .framework(args.framework)
         .rollouts(num_rollout_workers=1)
         .resources(num_gpus=1)
