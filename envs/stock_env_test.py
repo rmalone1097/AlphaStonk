@@ -233,7 +233,6 @@ class StockEnv(Env):
         vector = np.array([self.episode_roi, self.position_log, action, self.start_price, self.holding_time])
         last_dp = full_slice[-1, :]
         self.state['vector'] = np.concatenate((vector, last_dp), axis=0)
-        print(self.state['slice'])
 
         if self.print_config:
             print('action: ', action)

@@ -68,7 +68,6 @@ class SimpleCNN(TorchModelV2, nn.Module):
         @override(TorchModelV2)
         def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType):
                 obs_slice = torch.permute(input_dict['obs']['slice'], (0, 2, 1))
-                print(obs_slice.shape)
 
                 slice_out_list = []
                 # Iterate through tickers and run separate slices through os_cnn
