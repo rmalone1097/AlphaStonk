@@ -54,4 +54,4 @@ GS_df = pd.read_pickle(Path.home() / 'data' / 'df_GS_built.pkl')
 COST_df = pd.read_pickle(Path.home() / 'data' / 'df_COST_built.pkl')
 OXY_df = pd.read_pickle(Path.home() / 'data' / 'df_OXY_built.pkl')
 
-train_df, test_df = prepare_state_df(tickers, data_path, 2206200)
+train_df, test_df = prepare_state_df(tickers, data_path, 2100000, 100000, from_beginning=False)
