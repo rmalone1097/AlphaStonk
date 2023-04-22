@@ -28,12 +28,12 @@ ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
 #env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers, 'print': False})
 #algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
 roi_file_name = Path.home() / 'ray_results' / 'SPY_roi.csv'
-holdingtime_file_name = Path.home() / 'ray_results' / 'SPY_holdingtime.csv'
+action_file_name = Path.home() / 'ray_results' / 'SPY_actions.csv'
 #portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv
 
-def test_algo(algo_path, env, roi_file_name, portfolio_file_name, holdingtime_file_name):
+def test_algo(algo_path, env, roi_file_name, portfolio_file_name, action_file_name):
     roi_list = []
-    holdingtime_list = []
+    action_list = []
     portfolio_list = []
     algo = Algorithm.from_checkpoint(algo_path)
 
@@ -45,15 +45,15 @@ def test_algo(algo_path, env, roi_file_name, portfolio_file_name, holdingtime_fi
         obs, reward, done, info = env.step(action)
         episode_reward += reward
         roi_list.append(env.total_roi)
-        holdingtime_list.append(env.holding_time)
+        action_list.append(action)
     
     with open(roi_file_name, 'w') as f:
         write = csv.writer(f)
         write.writerow(roi_list)
     
-    with open(holdingtime_file_name, 'w') as f:
+    with open(action_file_name, 'w') as f:
         write = csv.writer(f)
-        write.writerow(holdingtime_list)
+        write.writerow(action_list)
 
     return roi_list
 
