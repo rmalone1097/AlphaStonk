@@ -1,8 +1,12 @@
 import subprocess
 import sys
+import pip
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+def _install(package):
+    subprocess.check_call([sys.executable, "-U", "pip", "install", package])
 
 if __name__ == '__main__':
     install('mplfinance')
@@ -11,3 +15,7 @@ if __name__ == '__main__':
     install('finnhub-python')
     install('tensorflow_probability')
     install('alpaca-py')
+
+    _install('ray[rllib]')
+
+    pip.main(['install', '--upgrade', 'tensorflow'])
