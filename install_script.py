@@ -10,3 +10,4 @@ if __name__ == '__main__':
     install('polygon-api-client')
     install('finnhub-python')
     install('tensorflow_probability')
+    install('alpaca-py')
