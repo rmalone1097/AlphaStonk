@@ -28,7 +28,7 @@ from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
 
 from policies.ray_models import *
-from envs.stock_env import StockEnv
+from envs.stock_env_train import StockEnv
 from utils.data_utils import prepare_state_df
 
 parser = argparse.ArgumentParser()

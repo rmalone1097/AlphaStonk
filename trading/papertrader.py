@@ -3,7 +3,7 @@ from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 
 from ray.rllib.algorithms.algorithm import Algorithm
-from envs.stock_env import StockEnv
+from envs.stock_env_train import StockEnv
 
 API_KEY = 'PKR994M0H9OM8NL6ZNNI'
 SECRET_KEY = 'NfodkyTl7xkl2k6Fw1LfBiEAu3sXxQbqr1A5O888'

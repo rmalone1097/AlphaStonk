@@ -19,7 +19,7 @@ from ray import tune
 from ray.rllib.algorithms.ppo import PPO, PPOConfig
 from ray.tune.registry import get_trainable_cls
 
-from envs.stock_env import StockEnv
+from envs.stock_env_train import StockEnv
 from utils.data_utils import prepare_state_df
 
 parser = argparse.ArgumentParser()
