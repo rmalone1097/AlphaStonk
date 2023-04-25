@@ -45,10 +45,14 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
             new_df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), start_stamp, span_stamp))
             df = pd.concat([df, new_df])
             print(span_datetime)
+        
+        paths = []
+        path = dir / str(ticker + '_' + str(original_start_stamp) + '_' + str(end_stamp) + '_' + str(timespan) + '_raw.pkl')
+        paths.append(path)
 
-        df.to_pickle(dir / str(ticker + '_' + str(original_start_stamp) + '_' + str(end_stamp) + '_' + str(timespan) + '_raw.pkl'))
+        df.to_pickle(path)
     
-    return df
+    return df, paths
 
 # Date format YYYY-MM-DD
 #TODO: build in support to handle NaN's (Thanksgiving)
@@ -321,19 +325,19 @@ def add_indicators(ticker, df):
     trading_df[ticker + '_ema_250'] = ta.ema(trading_df[ticker + '_close'], length=250)
     trading_df[ticker + '_ema_360'] = ta.ema(trading_df[ticker + '_close'], length=360)
     trading_df[ticker + '_ema_445'] = ta.ema(trading_df[ticker + '_close'], length=445) 
-    trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
-    trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
+    #trading_df[ticker + '_ema_900'] = ta.ema(trading_df[ticker + '_close'], length=900)
+    #trading_df[ticker + '_ema_1000'] = ta.ema(trading_df[ticker + '_close'], length=1000)
 
     #day length ema (5, 10, 20, 50, 100)
-    trading_df[ticker + 'ema_5_day'] = ta.ema(trading_df[ticker + '_close'], length=5*390)
-    trading_df[ticker + 'ema_10_day'] = ta.ema(trading_df[ticker + '_close'], length=10*390)
-    trading_df[ticker + 'ema_20_day'] = ta.ema(trading_df[ticker + '_close'], length=20*390)
-    trading_df[ticker + 'ema_50_day'] = ta.ema(trading_df[ticker + '_close'], length=50*390)
-    trading_df[ticker + 'ema_100_day'] = ta.ema(trading_df[ticker + '_close'], length=100*390)
+    #trading_df[ticker + 'ema_5_day'] = ta.ema(trading_df[ticker + '_close'], length=5*390)
+    #trading_df[ticker + 'ema_10_day'] = ta.ema(trading_df[ticker + '_close'], length=10*390)
+    #trading_df[ticker + 'ema_20_day'] = ta.ema(trading_df[ticker + '_close'], length=20*390)
+    #trading_df[ticker + 'ema_50_day'] = ta.ema(trading_df[ticker + '_close'], length=50*390)
+    #trading_df[ticker + 'ema_100_day'] = ta.ema(trading_df[ticker + '_close'], length=100*390)
 
     # Miscellaneous indicators 
-    trading_df[ticker + '_vwap'] = ta.vwap(trading_df[ticker + '_high'], trading_df[ticker + '_low'],trading_df[ticker + '_close'], trading_df[ticker + '_volume'], anchor='D')
-    trading_df [ticker + '_rsi14'] = ta.rsi(trading_df[ticker + '_close'], length=14)
+    #trading_df[ticker + '_vwap'] = ta.vwap(trading_df[ticker + '_high'], trading_df[ticker + '_low'],trading_df[ticker + '_close'], trading_df[ticker + '_volume'], anchor='D')
+    #trading_df [ticker + '_rsi14'] = ta.rsi(trading_df[ticker + '_close'], length=14)
 
     trading_df[ticker + '_energy'] = (trading_df[ticker + '_ema_25'] - trading_df[ticker + '_ema_170']) / trading_df[ticker + '_ema_170'] * 100
     energy = trading_df.pop(ticker + '_energy')
