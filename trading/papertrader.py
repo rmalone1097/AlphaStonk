@@ -24,14 +24,15 @@ minute_difference = 390 * 2 + 445
 
 def fetch_live_data(tickers):
     end_stamp = math.floor(time.time())
-    start_stamp = end_stamp - minute_difference * 60
+    # Grab a week of data
+    start_stamp = end_stamp - 10 * 24 * 60 * 60
     data_dir = Path.home() / 'data'
 
     _, filepaths = finnhub_data_writer(tickers=tickers,
                                       start_stamp=start_stamp,
                                       end_stamp=end_stamp,
                                       dir=data_dir)
-    
+        
     for i in range(len(tickers)):
         df_builder(tickers[i], filepaths[i])
 

@@ -375,7 +375,7 @@ def prepare_state_df(tickers, data_path, train_dps:int, test_dps:int, from_begin
         start_idx = 0
         end_idx = train_dps
     else:
-        start_idx = len(full_df) - train_dps - test_dps - 1
+        start_idx = len(full_df) - train_dps - test_dps
         end_idx = start_idx + train_dps
 
     assert start_idx + train_dps + test_dps <= len(full_df), 'Rows selected for training/testing data exceed amount of rows in the dataset'
