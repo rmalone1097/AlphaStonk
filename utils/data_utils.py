@@ -29,12 +29,13 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
     finnhub_client = finnhub.Client(api_key=FINNHUB_API_KEY)
     original_start_stamp = start_stamp
 
+    paths = []
     for ticker in tickers:
         # Go two weeks at a time to get all data
         start_datetime = datetime.datetime.fromtimestamp(original_start_stamp)
         span_datetime = start_datetime + timedelta(days=14)
         span_stamp = int(datetime.datetime.timestamp(span_datetime))
-        print(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
+        #print(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
         df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), original_start_stamp, span_stamp))
 
         while span_stamp < end_stamp:
@@ -45,8 +46,7 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
             new_df = pd.DataFrame(finnhub_client.stock_candles(ticker, str(timespan), start_stamp, span_stamp))
             df = pd.concat([df, new_df])
             print(span_datetime)
-        
-        paths = []
+
         path = dir / str(ticker + '_' + str(original_start_stamp) + '_' + str(end_stamp) + '_' + str(timespan) + '_raw.pkl')
         paths.append(path)
 

@@ -31,6 +31,7 @@ def fetch_live_data(tickers):
                                       start_stamp=start_stamp,
                                       end_stamp=end_stamp,
                                       dir=data_dir)
+    
     for i in range(len(tickers)):
         df_builder(tickers[i], filepaths[i])
 
