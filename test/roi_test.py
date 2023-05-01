@@ -16,20 +16,20 @@ from policies.ray_models import *
 from ray.rllib.algorithms.algorithm import Algorithm
 from ray.rllib.models import ModelCatalog
 
-tickers = ['SPY']
+tickers = ['SPY', 'AAPL', 'AMZN' 'BAC', 'NVDA']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
 data_path = Path.home() / 'data'
-_, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2206200)
+_, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2100000, 100000, from_beginning=False)
 
 ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
 
-#env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers, 'print': False})
-#algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
+env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers, 'print': False})
+algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
 roi_file_name = Path.home() / 'ray_results' / 'SPY_roi.csv'
 action_file_name = Path.home() / 'ray_results' / 'SPY_actions.csv'
-#portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv
+portfolio_file_name = 'SPY_AAPL_BAC_PPO_portfolio.csv'
 
 def test_algo(algo_path, env, roi_file_name, portfolio_file_name, action_file_name):
     roi_list = []
@@ -84,6 +84,6 @@ def plot_portfolio(portfolio_list):
     plt.show()
 
 if __name__ == "__main__":
-    #test_algo(algo_path, env, roi_file_name, portfolio_file_name, holdingtime_file_name)
-    roi_list = read_csv(Path.home() / 'Desktop' / 'SPY_AAPL_BAC_PPO_roi.csv')
-    plot_roi_list(full_test_df, roi_list)
+    test_algo(algo_path, env, roi_file_name, portfolio_file_name, action_file_name)
+    #roi_list = read_csv(Path.home() / 'Desktop' / 'SPY_AAPL_BAC_PPO_roi.csv')
+    #plot_roi_list(full_test_df, roi_list)

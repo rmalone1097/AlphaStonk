@@ -44,7 +44,7 @@ parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-tickers = ['SPY', 'AAPL', 'BAC']
+tickers = ['SPY', 'AAPL', 'AMZN' 'BAC', 'NVDA']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
