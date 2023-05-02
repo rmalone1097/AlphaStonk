@@ -16,7 +16,7 @@ SECRET_KEY = 'NfodkyTl7xkl2k6Fw1LfBiEAu3sXxQbqr1A5O888'
 
 trading_client = TradingClient(API_KEY, SECRET_KEY, paper=True)
 
-tickers = ['SPY', 'AAPL', 'AMZN' 'BAC', 'NVDA']
+tickers = ['SPY', 'AAPL', 'AMZN', 'BAC', 'NVDA']
 # Notional value of every trade
 notional_transaction_value = 10000
 # Minute difference between start stamp and end stamp
