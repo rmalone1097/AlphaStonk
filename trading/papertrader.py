@@ -22,7 +22,7 @@ notional_transaction_value = 10000
 # Minute difference between start stamp and end stamp
 minute_difference = 390 * 2 + 445
 
-def fetch_live_data(tickers):
+def fetch_old_data(tickers):
     end_stamp = math.floor(time.time())
     # Grab a week of data
     start_stamp = end_stamp - 10 * 24 * 60 * 60
@@ -32,6 +32,9 @@ def fetch_live_data(tickers):
                                       start_stamp=start_stamp,
                                       end_stamp=end_stamp,
                                       dir=data_dir)
+    return filepaths
+
+def build_live_data(tickers, filepaths):
         
     for i in range(len(tickers)):
         df_builder(tickers[i], filepaths[i])
@@ -49,10 +52,14 @@ def check_account_value():
 #algo = Algorithm.from_checkpoint(algo_path)
 
 if __name__ == "__main__":
-    full_state_df, obs_state_df = fetch_live_data(tickers)
+    old_df = pd.read_pickle(Path.home() / 'data' / 'AAPL_1682107263_1682971263_1_raw.pkl')
 
+    live_df = build_live_df(Path.home() / 'data' / 'SPY_datastream.json')
+    live_df = live_df[::-1]
+    live_df = live_df.rename(columns={"close":"c", "max":"h", "min": "l", "open":"o", "s":"s", "time":"t", "volume":"v"})
+    live_df = pd.concat([old_df, live_df])
+    full_state_df, obs_state_df, _, _ = prepare_state_df(tickers, data_dir, train_dps=390*2, test_dps=0, from_beginning=False)
 
 '''market_order_data = MarketOrderRequest(
                     symbol = 
 )'''
-

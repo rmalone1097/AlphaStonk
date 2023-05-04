@@ -456,3 +456,10 @@ def plot_energy_cloud(ticker, df, starting_index=0, ending_index=30):
         mpf.make_addplot(df_slice['zero_reward'], panel=2, ylabel='Zero Reward'),
         mpf.make_addplot(df_slice['energy'], panel=3, color='orange', ylabel='Energy')]
     mpf.plot(df_slice, type='candle', addplot=taplots)
+
+def build_live_df(tv_json):
+    df = pd.read_json(tv_json)
+    df = df.loc[:,['close', 'max', 'min', 'open', 'time', 'volume']]
+    df.insert(4, "s", "ok", True)
+
+    return df
