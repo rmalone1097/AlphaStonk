@@ -30,6 +30,7 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
     original_start_stamp = start_stamp
 
     paths = []
+    dfs = []
     for ticker in tickers:
         # Go two weeks at a time to get all data
         start_datetime = datetime.datetime.fromtimestamp(original_start_stamp)
@@ -49,10 +50,11 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
 
         path = dir / str(ticker + '_' + str(original_start_stamp) + '_' + str(end_stamp) + '_' + str(timespan) + '_raw.pkl')
         paths.append(path)
+        dfs.append(df)
 
         df.to_pickle(path)
     
-    return df, paths
+    return dfs, paths
 
 # Date format YYYY-MM-DD
 #TODO: build in support to handle NaN's (Thanksgiving)
@@ -381,6 +383,30 @@ def prepare_state_df(tickers, data_path, train_dps:int, test_dps:int, from_begin
     assert start_idx + train_dps + test_dps <= len(full_df), 'Rows selected for training/testing data exceed amount of rows in the dataset'
 
     return full_df.iloc[start_idx:end_idx, :], obs_df.iloc[start_idx:end_idx, :], full_df.iloc[end_idx:end_idx+test_dps, :], obs_df.iloc[end_idx:end_idx+test_dps, :]
+
+def prepare_live_df(tickers, built_df_list):
+    df_list = []
+    column_list = []
+    obs_df_list = []
+    obs_column_list = []
+
+    for i, df in tqdm(enumerate(built_df_list)):
+        daily_candle_list = list(df['daily_candle_counter'].values)
+        df = df.drop(columns=['status', 'timestamp', 'daily_candle_counter'])
+        obs_df_list.append(df.copy(deep=True))
+        obs_column_list += list(df.columns.values)
+
+        trading_df = add_indicators(tickers[i], df)
+        #trading_df = trading_df.drop(columns=['daily_candle_counter'])
+        df_list.append(trading_df.to_numpy())
+        column_list += list(trading_df.columns.values)
+
+    full_df = pd.DataFrame(np.concatenate((df_list), axis=1), columns=column_list)
+    full_df.insert(0, 'daily_candle', daily_candle_list)
+
+    obs_df = pd.DataFrame(np.concatenate((obs_df_list), axis=1), columns=obs_column_list)
+
+    return full_df, obs_df
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
