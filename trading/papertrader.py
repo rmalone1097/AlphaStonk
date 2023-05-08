@@ -37,15 +37,6 @@ def fetch_old_data(tickers):
                                       dir=data_dir)
     return dfs
 
-def build_live_data(tickers, filepaths):
-        
-    for i in range(len(tickers)):
-        df_builder(tickers[i], filepaths[i])
-
-    full_state_df, obs_state_df, _, _ = prepare_state_df(tickers, data_dir, train_dps=390*2, test_dps=0, from_beginning=False)
-
-    return full_state_df, obs_state_df
-
 def check_account_value():
     account = trading_client.get_account()
     for property_name, value in account:
