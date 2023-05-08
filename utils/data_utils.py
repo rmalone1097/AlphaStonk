@@ -30,6 +30,7 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
     original_start_stamp = start_stamp
 
     paths = []
+    dfs = []
     for ticker in tickers:
         # Go two weeks at a time to get all data
         start_datetime = datetime.datetime.fromtimestamp(original_start_stamp)
@@ -49,10 +50,11 @@ def finnhub_data_writer(tickers, start_stamp, end_stamp=int(time.time()), timesp
 
         path = dir / str(ticker + '_' + str(original_start_stamp) + '_' + str(end_stamp) + '_' + str(timespan) + '_raw.pkl')
         paths.append(path)
+        dfs.append(df)
 
         df.to_pickle(path)
     
-    return df, paths
+    return dfs, paths
 
 # Date format YYYY-MM-DD
 #TODO: build in support to handle NaN's (Thanksgiving)
@@ -135,8 +137,7 @@ def fetch_all_data(ticker:str, multiplier:int, start_date:str, end_date:str, dir
             counter = 0
             str(current_date_obj + timedelta(days=datedelta))
 
-def df_builder(ticker:str, pickle_dir):
-    raw_df = pd.read_pickle(pickle_dir)
+def df_builder(ticker:str, raw_df):
     array = raw_df.to_numpy()
     first_found = False
     daily_arrays = []
@@ -311,6 +312,106 @@ def df_builder(ticker:str, pickle_dir):
 
     return raw_df, df
 
+def live_df_builder(ticker:str, raw_df):
+    array = raw_df.to_numpy()
+    first_found = False
+    daily_arrays = []
+    daily_array = np.array([])
+
+    i = 1
+    while i < array.shape[0]:
+        row = np.array([array[i, :]])
+        prev_row = np.array([array[i-1, :]])
+
+        # Datetime object made from timestamp of current row
+        dt = datetime.datetime.fromtimestamp(array[i, 5], pytz.timezone('US/Eastern'))
+        prev_dt = datetime.datetime.fromtimestamp(array[i-1, 5], pytz.timezone('US/Eastern'))
+        delta = dt - prev_dt
+        m_delta = int(delta.total_seconds() / 60)
+
+        delta_to_end = prev_dt.replace(hour=15, minute=59) - prev_dt
+        m_delta_to_end = int(delta_to_end.total_seconds() / 60)
+
+        # Check for first dp in trading day. If no 9:30 dp, starting dp will be dp prior to the first one in trading day
+        if first_found == False:
+            if dt.time() == datetime.time(9, 30):
+                first_found = True
+                daily_array = np.array([])
+                #i += 1
+
+            elif dt.time() > datetime.time(9, 30) and dt.time() < datetime.time(15, 59):
+                delta = dt - dt.replace(hour=9, minute=30)
+                m_delta = int(delta.total_seconds() / 60)
+                first_found = True
+                daily_array = np.repeat(prev_row, m_delta, axis=0)
+        
+        elif first_found == True:
+            # Check for last dp
+            if dt.time() == datetime.time(15, 59):
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
+                daily_array = np.concatenate((daily_array, row), axis=0)
+                daily_arrays.append(daily_array)
+                daily_array = np.array([[]])
+                first_found = False
+
+            elif dt.time() > datetime.time(15, 59) or m_delta_to_end < m_delta:
+                daily_array = np.concatenate((daily_array, np.repeat(prev_row, (m_delta_to_end + 1), axis=0)))
+                daily_arrays.append(daily_array)
+                daily_array = np.array([[]])
+                first_found = False
+
+            else:
+                if daily_array.size == 0:
+                    daily_array = np.repeat(prev_row, m_delta, axis=0)
+                else:
+                    daily_array = np.concatenate((daily_array, np.repeat(prev_row, m_delta, axis=0)))
+
+        i += 1
+    
+    daily_arrays.append(daily_array)
+    complete_array = np.vstack(daily_arrays)
+    df = pd.DataFrame(complete_array, columns=[ticker+'_close', ticker+'_high', ticker+'_low', ticker+'_open', 'status', 'timestamp', ticker+'_volume'])
+
+    #df['daily_candle_counter'] = daily_candle_counter
+    df['datetime'] = df.apply(lambda row: datetime.datetime.fromtimestamp(row.timestamp), axis=1)
+    raw_df['dt'] = raw_df.apply(lambda row: datetime.datetime.fromtimestamp(row.t), axis=1)   
+    df = df.fillna(0)
+
+    i_to_remove = []
+
+    early_close_candles = 210
+    max_candles = 390
+    daily_candle_counter = []
+    daily_candle = 0
+    candle_counter = 0
+    candle_counter_log = 0
+    for i, row in tqdm(enumerate(df.itertuples(index=True)), total=len(df)):
+        dt = row.datetime
+
+        if max_candles != 390:
+            max_candles = 390
+            candle_counter = 0
+        candle_counter += 1
+        
+        if candle_counter > max_candles and max_candles == early_close_candles:
+            i_to_remove.append(i)
+        elif candle_counter == candle_counter_log:
+            i_to_remove.append(i)
+        else:
+            daily_candle_counter.append(candle_counter)
+        
+        candle_counter_log = candle_counter
+        
+        if candle_counter == max_candles:
+            candle_counter = 0
+    
+    df = df.drop(index=i_to_remove)
+    df['daily_candle_counter'] = daily_candle_counter
+
+    df = df.set_index('datetime') 
+
+    return raw_df, df
+
 def add_indicators(ticker, df):
     trading_df = df
 
@@ -381,6 +482,30 @@ def prepare_state_df(tickers, data_path, train_dps:int, test_dps:int, from_begin
     assert start_idx + train_dps + test_dps <= len(full_df), 'Rows selected for training/testing data exceed amount of rows in the dataset'
 
     return full_df.iloc[start_idx:end_idx, :], obs_df.iloc[start_idx:end_idx, :], full_df.iloc[end_idx:end_idx+test_dps, :], obs_df.iloc[end_idx:end_idx+test_dps, :]
+
+def prepare_live_df(tickers, built_df_list):
+    df_list = []
+    column_list = []
+    obs_df_list = []
+    obs_column_list = []
+
+    for i, df in tqdm(enumerate(built_df_list)):
+        daily_candle_list = list(df['daily_candle_counter'].values)
+        df = df.drop(columns=['status', 'timestamp', 'daily_candle_counter'])
+        obs_df_list.append(df.copy(deep=True))
+        obs_column_list += list(df.columns.values)
+
+        trading_df = add_indicators(tickers[i], df)
+        #trading_df = trading_df.drop(columns=['daily_candle_counter'])
+        df_list.append(trading_df.to_numpy())
+        column_list += list(trading_df.columns.values)
+
+    full_df = pd.DataFrame(np.concatenate((df_list), axis=1), columns=column_list)
+    full_df.insert(0, 'daily_candle', daily_candle_list)
+
+    obs_df = pd.DataFrame(np.concatenate((obs_df_list), axis=1), columns=obs_column_list)
+
+    return full_df, obs_df
 
 def plot_df_slice(df, starting_index=0, ending_index=30):
     taplots = []
@@ -456,3 +581,10 @@ def plot_energy_cloud(ticker, df, starting_index=0, ending_index=30):
         mpf.make_addplot(df_slice['zero_reward'], panel=2, ylabel='Zero Reward'),
         mpf.make_addplot(df_slice['energy'], panel=3, color='orange', ylabel='Energy')]
     mpf.plot(df_slice, type='candle', addplot=taplots)
+
+def build_live_df(tv_json):
+    df = pd.read_json(tv_json)
+    df = df.loc[:,['close', 'max', 'min', 'open', 'time', 'volume']]
+    df.insert(4, "s", "ok", True)
+
+    return df
