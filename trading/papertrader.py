@@ -76,7 +76,7 @@ if __name__ == "__main__":
                            order_data=market_order_data
             )
         
-        if action != action_log:
+        if action != action_log and action_log != 0:
             TradingClient.close_all_positions()
 
         action_log = action
