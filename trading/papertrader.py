@@ -81,3 +81,4 @@ if __name__ == "__main__":
 
         action_log = action
         ticker_log = tickers[ticker_number]
+        time.sleep(60)
