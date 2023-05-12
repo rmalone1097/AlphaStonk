@@ -6,6 +6,8 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 
+from policies.ray_models import *
+from ray.rllib.models import ModelCatalog
 from ray.rllib.algorithms.algorithm import Algorithm
 from envs.stock_env_trade import StockEnv
 from utils.data_utils import *
@@ -16,13 +18,15 @@ SECRET_KEY = 'NfodkyTl7xkl2k6Fw1LfBiEAu3sXxQbqr1A5O888'
 
 trading_client = TradingClient(API_KEY, SECRET_KEY, paper=True)
 
-tickers = ['SPY', 'AAPL', 'AMZN', 'BAC', 'NVDA']
+tickers = ['AMZN', 'MSFT', 'NVDA']
 # Notional value of every trade
 notional_transaction_value = 10000
 # Minute difference between start stamp and end stamp
 minute_difference = 390 * 2 + 445
 
-algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
+ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
+
+algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_f5f0b_00000_0_2023-05-11_19-56-47'/'checkpoint_000250'
 algo = Algorithm.from_checkpoint(algo_path)
 
 def fetch_old_data(tickers):
@@ -43,9 +47,10 @@ def check_account_value():
         print(f"\"{property_name}\": {value}")
 
 if __name__ == "__main__":
-    dfs = fetch_old_data(tickers)
-
+    action_log = 0
+    
     while True:
+        dfs = fetch_old_data(tickers)
         built_dfs = []
         for i, ticker in enumerate(tickers):
             _, live_df = live_df_builder(tickers[i], dfs[i])
@@ -72,12 +77,15 @@ if __name__ == "__main__":
                                 side = order_side,
                                 time_in_force = TimeInForce.DAY
             )
+            print(action)
+            print(market_order_data)
             market_order = trading_client.submit_order(
                            order_data=market_order_data
             )
         
         if action != action_log and action_log != 0:
             TradingClient.close_all_positions()
+            print('Closing Positions')
 
         action_log = action
         ticker_log = tickers[ticker_number]

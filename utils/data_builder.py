@@ -6,12 +6,12 @@ from data_utils import *
 tickers = ['SPY', 'AAPL', 'MSFT', 'AMZN', 'NVDA', 'AMD', 'BAC', 'COST', 'OXY']
 cande_length = 1
 start_stamp = 928761600
-end_stamp = 1676581140
+end_stamp = 1683732468
 data_path = Path.home() / 'data'
 
 #df = prepare_state_df(tickers, data_path=data_path)
 
-#finnhub_data_writer(tickers, start_stamp, end_stamp)
+finnhub_data_writer(tickers, start_stamp, end_stamp)
 #tickers = ['SPY', 'AAPL', 'MSFT', 'AMZN', 'NVDA', 'WMT', 'AMD', 'BAC', 'GS', 'COST', 'OXY']
 #SPY_df = prepare_state_df(['SPY'], data_path)
 #df = finnhub_data_writer(['AAPL'], 928769400)
