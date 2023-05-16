@@ -61,8 +61,10 @@ if __name__ == "__main__":
         env = StockEnv(config = {'full_df': full_df, 'obs_df': obs_df, 'tickers': tickers, 'print': False, 'rew_function': 'energy'})
         obs = env.reset()
         action = algo.compute_single_action(obs)
+        print('Action: ', action)
 
         positions = trading_client.get_all_positions()
+        print('Positions: ', positions)
 
         ticker_number = max(math.floor((action - 1) / 2), 0)
         if action == 0 or action == action_log:
@@ -85,7 +87,6 @@ if __name__ == "__main__":
                                 side = order_side,
                                 time_in_force = TimeInForce.DAY
             )
-            print(action)
             print(market_order_data)
             market_order = trading_client.submit_order(
                            order_data=market_order_data
