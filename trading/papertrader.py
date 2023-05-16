@@ -62,12 +62,20 @@ if __name__ == "__main__":
         obs = env.reset()
         action = algo.compute_single_action(obs)
 
+        positions = trading_client.get_all_positions()
+
         ticker_number = max(math.floor((action - 1) / 2), 0)
         if action == 0 or action == action_log:
             order_side = None
+
         elif action % 2 == 1:
+            if positions:
+                trading_client.close_all_positions(cancel_orders=True)
             order_side = OrderSide.BUY
+            
         elif action % 2 == 0:
+            if positions:
+                trading_client.close_all_positions(cancel_orders=True)
             order_side = OrderSide.SELL
 
         if order_side:
@@ -82,10 +90,6 @@ if __name__ == "__main__":
             market_order = trading_client.submit_order(
                            order_data=market_order_data
             )
-        
-        if action != action_log and action_log != 0:
-            trading_client.close_all_positions(cancel_orders=True)
-            print('Closing Positions')
 
         action_log = action
         ticker_log = tickers[ticker_number]
