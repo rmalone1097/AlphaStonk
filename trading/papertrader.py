@@ -84,7 +84,7 @@ if __name__ == "__main__":
             )
         
         if action != action_log and action_log != 0:
-            TradingClient.close_all_positions()
+            trading_client.close_all_positions(cancel_orders=True)
             print('Closing Positions')
 
         action_log = action
