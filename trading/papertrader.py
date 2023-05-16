@@ -63,7 +63,7 @@ if __name__ == "__main__":
         action = algo.compute_single_action(obs)
 
         ticker_number = max(math.floor((action - 1) / 2), 0)
-        if action == 0:
+        if action == 0 or action == action_log:
             order_side = None
         elif action % 2 == 1:
             order_side = OrderSide.BUY
