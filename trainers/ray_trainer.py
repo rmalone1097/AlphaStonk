@@ -16,7 +16,7 @@ from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.evaluation import Episode, RolloutWorker
 import ray
 from ray import tune
-from ray.rllib.algorithms.ppo import PPO, PPOConfig
+from ray.rllib.algorithms.apex_dqn.apex_dqn import ApexDQN, ApexDQNConfig
 from ray.tune.registry import get_trainable_cls
 from ray.rllib.models import ModelCatalog
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     ray.init(num_gpus=1)
     args = parser.parse_args()
     config = (
-        PPOConfig()
+        ApexDQNConfig()
         .environment(StockEnv, env_config={"full_df": full_train_df,
                                            "obs_df": obs_train_df,
                                            "tickers": tickers,
@@ -104,14 +104,17 @@ if __name__ == "__main__":
         .training(
             model={
                 "custom_model": "simple_cnn"
-            }
+            },
+            num_atoms = 4,
+            noisy = True,
+            n_step = 4
         )
     )
     stop = {
         "timesteps_total" : args.stop_timesteps
     }
     tuner = tune.Tuner(
-        "PPO", param_space=config.to_dict(), run_config=air.RunConfig(
+        "APEX", param_space=config.to_dict(), run_config=air.RunConfig(
             stop=stop, 
             verbose=1, 
             checkpoint_config=air.CheckpointConfig(checkpoint_at_end=True)
