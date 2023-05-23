@@ -16,7 +16,7 @@ from policies.ray_models import *
 from ray.rllib.algorithms.algorithm import Algorithm
 from ray.rllib.models import ModelCatalog
 
-tickers = ['SPY', 'AAPL', 'AMZN' 'BAC', 'NVDA']
+tickers = ['SPY', 'AAPL', 'AMZN', 'BAC', 'NVDA']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
