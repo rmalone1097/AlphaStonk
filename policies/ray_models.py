@@ -26,7 +26,7 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
                 nn.Module.__init__(self)
 
-                self.num_tickers = 3
+                self.num_tickers = 5
                 logit_count = 1 + 2*self.num_tickers
                 input_rows = 780
                 self.input_features = 5
