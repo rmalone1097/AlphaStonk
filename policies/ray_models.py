@@ -37,31 +37,34 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 self.cnn = nn.Sequential(
                         nn.Conv1d(self.input_features, num_filters, kernel_size=7, padding='same'),
                         nn.ReLU(),
+                        nn.MaxPool1d(kernel_size=2),
                         nn.Conv1d(num_filters, num_filters, kernel_size=5, padding='same'),
                         nn.ReLU(),
+                        nn.MaxPool1d(kernel_size=2),
                         nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
                         nn.ReLU(),
+                        nn.MaxPool1d(kernel_size=2),
                         nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
                         nn.ReLU(),
                         nn.Flatten()
                 )
                 self.FC_slice = nn.Sequential(
                         nn.Linear(input_rows*num_filters, output_features),
-                        nn.Tanh(),
-                        nn.Linear(output_features, output_features),
                         nn.Tanh()
                 )
                 self.FC_vector = nn.Sequential(
                         nn.Linear(vector_length, output_features),
-                        nn.Tanh(),
-                        nn.Linear(output_features, output_features),
                         nn.Tanh()
                 )
                 self.logits_net = nn.Sequential(
-                        nn.Linear(output_features+output_features*self.num_tickers, logit_count)
+                        nn.Linear(output_features+output_features*self.num_tickers, output_features),
+                        nn.Tanh(),
+                        nn.Linear(output_features, logit_count)
                 )
                 self.value_net = nn.Sequential(
-                        nn.Linear(output_features+output_features*self.num_tickers, 1)
+                        nn.Linear(output_features+output_features*self.num_tickers, output_features),
+                        nn.Tanh(),
+                        nn.Linear(output_features, 1)
                 )
 
         
