@@ -16,5 +16,5 @@ if __name__ == '__main__':
     install('tensorflow_probability')
     install('alpaca-py')
 
-    pip.main(['install', '-U', 'ray[rllib]'])
     pip.main(['install', '--upgrade', 'tensorflow'])
+    pip.main(['install', '-U', 'ray[rllib]==2.3.0'])
