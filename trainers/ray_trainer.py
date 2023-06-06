@@ -99,7 +99,7 @@ if __name__ == "__main__":
                                            "print": False,
                                            "rew_function": 'energy'})
         .framework(args.framework)
-        .rollouts(num_rollout_workers=24)
+        .rollouts(num_rollout_workers=23)
         .resources(num_gpus=1)
         .training(
             model={
