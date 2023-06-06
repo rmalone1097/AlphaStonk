@@ -16,7 +16,7 @@ from policies.ray_models import *
 from ray.rllib.algorithms.algorithm import Algorithm
 from ray.rllib.models import ModelCatalog
 
-tickers = ['SPY', 'AAPL', 'AMZN', 'BAC', 'NVDA']
+tickers = ['SPY', 'AAPL','BAC']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
@@ -25,7 +25,12 @@ _, _, full_test_df, obs_test_df = prepare_state_df(tickers, data_path, 2100000, 
 
 ModelCatalog.register_custom_model("simple_cnn", SimpleCNN)
 
-env = StockEnv(config = {'full_df': full_test_df, 'obs_df': obs_test_df, 'tickers': tickers, 'print': False})
+env = StockEnv(config = {'full_df': full_test_df, 
+                         'obs_df': obs_test_df, 
+                         'tickers': tickers, 
+                         'print': False,
+                         'rew_function': 'energy'})
+
 algo_path = Path.home() / 'ray_results'/'PPO'/'PPO_StockEnv_280fa_00000_0_2023-03-01_06-13-17'/'checkpoint_002500'
 roi_file_name = Path.home() / 'ray_results' / 'SPY_roi.csv'
 action_file_name = Path.home() / 'ray_results' / 'SPY_actions.csv'
