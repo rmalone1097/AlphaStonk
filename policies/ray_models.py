@@ -37,10 +37,13 @@ class SimpleCNN(TorchModelV2, nn.Module):
                 self.cnn = nn.Sequential(
                         nn.Conv1d(self.input_features, num_filters, kernel_size=7, padding='same'),
                         nn.ReLU(),
+                        nn.MaxPool1d(kernel_size=1),
                         nn.Conv1d(num_filters, num_filters, kernel_size=5, padding='same'),
                         nn.ReLU(),
+                        nn.MaxPool1d(kernel_size=1),
                         nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
                         nn.ReLU(),
+                        nn.MaxPool1d(kernel_size=1),
                         nn.Conv1d(num_filters, num_filters, kernel_size=3, padding='same'),
                         nn.ReLU(),
                         nn.Flatten()

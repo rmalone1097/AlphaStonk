@@ -38,13 +38,13 @@ parser.add_argument(
 )
 # 100 million timesteps by default
 parser.add_argument(
-    "--stop-timesteps", type=int, default=100000000, help="Number of timesteps to train."
+    "--stop-timesteps", type=int, default=10000000, help="Number of timesteps to train."
 )
 '''parser.add_argument(
     "--stop-reward", type=float, default=600.0, help="Reward at which we stop training."
 )'''
 
-tickers = ['SPY', 'AAPL', 'AMZN' 'BAC', 'NVDA']
+tickers = ['SPY', 'AAPL', 'BAC']
 cande_length = 1
 start_stamp = 928761600
 end_stamp = 1676581140
